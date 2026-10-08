@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fiszki — Minimalistyczna Aplikacja do Nauki</title>
     
-    <!-- PWA / Web App Meta -->
+    <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#06080d">
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZpc3praSIsCiAgInNob3J0X25hbWUiOiAiRmlzemtpIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwNjA4MGQiLAogICJ0aGVtZV9jb2xvciI6ICIjMDYwODBkIgp9">
 
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -75,7 +75,7 @@
 </head>
 <body class="h-full flex flex-col justify-between overflow-x-hidden antialiased">
 
-    <!-- TOP HEADER -->
+    <!-- HEADER -->
     <header class="border-b border-dark-border/80 bg-dark-800/90 backdrop-blur-md sticky top-0 z-40">
         <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
             <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('decks')">
@@ -85,7 +85,6 @@
                 <h1 class="text-base font-bold text-white tracking-tight">Fiszki</h1>
             </div>
 
-            <!-- Desktop Nav -->
             <nav class="hidden md:flex items-center space-x-1">
                 <button id="nav-decks" onclick="switchTab('decks')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white bg-dark-700 border border-dark-border">
                     <i class="fa-solid fa-layer-group mr-1.5"></i>Talie (<span id="deck-count-badge">0</span>)
@@ -107,26 +106,51 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 pb-32 md:pb-8">
 
-        <!-- TAB 1: DECKS GALLERY & QUICK ADD -->
+        <!-- TAB 1: DECKS GALLERY & FAST INPUT -->
         <section id="tab-decks" class="space-y-4">
             
             <!-- FAST IN-APP INPUT PANEL -->
-            <div class="bg-dark-800 border border-dark-border rounded-xl p-3.5 space-y-2.5">
+            <div class="bg-dark-800 border border-dark-border/80 rounded-xl p-4 shadow-xl space-y-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-blue-400"></i> Szybkie dodawanie fiszki
+                    <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt"></i> Dodaj fiszkę do talii
                     </span>
-                    <select id="quick-add-target-deck" class="bg-dark-900 border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500 max-w-[160px] truncate">
+                    <select id="quick-add-target-deck" class="bg-dark-900 border border-dark-border rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500 max-w-[180px] truncate">
                         <!-- Dynamic options -->
                     </select>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                    <input type="text" id="quick-add-front" placeholder="Przód (np. Apple)" class="sm:col-span-2 bg-dark-900 border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                    <input type="text" id="quick-add-back" placeholder="Tył (np. Jabłko)" class="sm:col-span-2 bg-dark-900 border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                    <button onclick="quickAddCard()" class="sm:col-span-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg px-3 py-1.5 text-xs transition active:scale-95 flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-plus"></i> Dodaj
-                    </button>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-[10px] font-mono text-gray-400 uppercase mb-1">Przód (Pojęcie)</label>
+                        <input type="text" id="quick-add-front" oninput="updateLivePreview()" placeholder="np. Resilience" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-mono text-gray-400 uppercase mb-1">Tył (Odpowiedź)</label>
+                        <input type="text" id="quick-add-back" oninput="updateLivePreview()" placeholder="np. Odporność, elastyczność" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
+                    </div>
                 </div>
+
+                <div>
+                    <label class="block text-[10px] font-mono text-gray-400 uppercase mb-1">Notatka / Przykład użycia (Opcjonalnie)</label>
+                    <input type="text" id="quick-add-example" oninput="updateLivePreview()" onkeydown="handleQuickAddKeydown(event)" placeholder="np. Build emotional resilience in difficult times." class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
+                </div>
+
+                <!-- Live Card Preview Container -->
+                <div id="live-card-preview" class="hidden pt-2 border-t border-dark-border/40">
+                    <div class="bg-dark-900/80 border border-blue-500/30 rounded-lg p-3 text-xs flex items-center justify-between gap-2">
+                        <div class="space-y-1">
+                            <span class="text-[9px] text-blue-400 font-mono uppercase">Podgląd na żywo:</span>
+                            <p class="font-bold text-white"><span id="preview-front" class="text-blue-300">...</span> $\rightarrow$ <span id="preview-back" class="text-gray-200">...</span></p>
+                            <p id="preview-example-container" class="text-[11px] text-gray-400 italic hidden">"<span id="preview-example"></span>"</p>
+                        </div>
+                        <span class="text-[10px] text-gray-500 font-mono shrink-0">Wciśnij [Enter] ↵</span>
+                    </div>
+                </div>
+
+                <button onclick="quickAddCard()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg py-2 text-xs transition active:scale-98 flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Dodaj Fiszkę do Talii
+                </button>
             </div>
 
             <div class="flex items-center justify-between border-b border-dark-border/40 pb-2 pt-2">
@@ -140,14 +164,13 @@
             </div>
         </section>
 
-        <!-- TAB 2: PROMPT GENERATOR (INCL. VISION / PHOTO OCR) -->
+        <!-- TAB 2: PROMPT GENERATOR -->
         <section id="tab-generator" class="hidden max-w-xl mx-auto space-y-4">
             <div class="border-b border-dark-border/50 pb-2">
                 <h2 class="text-sm font-bold text-white">Generator Promptów dla AI</h2>
                 <p class="text-xs text-gray-400">Wybierz tryb tekstowy lub odczyt ze zdjęcia/skanu podręcznika.</p>
             </div>
 
-            <!-- Mode Switcher -->
             <div class="grid grid-cols-2 gap-2 bg-dark-800 p-1 rounded-xl border border-dark-border">
                 <button onclick="setGeneratorMode('text')" id="mode-btn-text" class="py-1.5 text-xs font-semibold rounded-lg bg-dark-700 text-white transition">Tekst / Temat</button>
                 <button onclick="setGeneratorMode('vision')" id="mode-btn-vision" class="py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition"><i class="fa-solid fa-camera mr-1"></i> Skan / Zdjęcie</button>
@@ -260,6 +283,7 @@
                         <span class="text-[9px] font-mono tracking-wider text-blue-400 uppercase">ODPOWIEDŹ</span>
                         <div class="my-auto text-center py-2 space-y-2 overflow-y-auto max-h-[180px]">
                             <p id="card-back-text" class="text-base font-medium text-gray-100 leading-relaxed"></p>
+                            <p id="card-example-text" class="text-xs text-gray-400 italic hidden"></p>
                         </div>
                         <span class="text-[10px] text-gray-400 text-center">Oceń stopień zapamiętania</span>
                     </div>
@@ -332,7 +356,7 @@
         </div>
     </div>
 
-    <!-- PWA INSTALL BANNER FOR MOBILE -->
+    <!-- PWA INSTALL BANNER -->
     <div id="pwa-install-banner" class="hidden fixed bottom-14 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-sm bg-dark-700/95 border border-blue-500/40 backdrop-blur-md p-3.5 rounded-xl shadow-2xl z-50 space-y-2">
         <div class="flex items-start justify-between gap-2">
             <div class="flex items-center gap-2">
@@ -371,7 +395,7 @@
         });
 
         function loadDecksFromStorage() {
-            const saved = localStorage.getItem('fiszki_app_decks_v4');
+            const saved = localStorage.getItem('fiszki_app_decks_v5');
             if (saved) {
                 try { decks = JSON.parse(saved); } catch(e) { decks = []; }
             } else {
@@ -379,8 +403,8 @@
                     id: 'deck_demo_1',
                     title: 'Słówka Angielskie — Technologia',
                     cards: [
-                        { id: 'c1', front: 'Artificial Intelligence', back: 'Sztuczna Inteligencja', status: 0 },
-                        { id: 'c2', front: 'Cloud Computing', back: 'Przetwarzanie w Chmurze', status: 0 }
+                        { id: 'c1', front: 'Artificial Intelligence', back: 'Sztuczna Inteligencja', example: 'AI is transforming tech.', status: 0 },
+                        { id: 'c2', front: 'Cloud Computing', back: 'Przetwarzanie w Chmurze', example: 'Data stored in the cloud.', status: 0 }
                     ]
                 }];
                 saveDecksToStorage();
@@ -388,7 +412,7 @@
         }
 
         function saveDecksToStorage() {
-            localStorage.setItem('fiszki_app_decks_v4', JSON.stringify(decks));
+            localStorage.setItem('fiszki_app_decks_v5', JSON.stringify(decks));
             updateDeckBadge();
             populateDeckSelectors();
         }
@@ -488,7 +512,6 @@
                     <div class="flex items-start justify-between gap-2 mb-2">
                         <h3 class="text-xs font-bold text-white truncate">${escapeHtml(deck.title)}</h3>
                         <div class="flex items-center gap-1 shrink-0">
-                            <!-- TWO-CLICK INLINE CONFIRM DELETE -->
                             <button id="del-btn-${deck.id}" onclick="inlineConfirmDelete('${deck.id}', event)" class="px-2 py-0.5 text-[10px] text-gray-500 hover:text-rose-400 rounded transition font-mono">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
@@ -520,7 +543,40 @@
             });
         }
 
-        // INLINE TWO-CLICK DELETE (NO MODALS / NO ALERTS)
+        function updateLivePreview() {
+            const front = document.getElementById('quick-add-front').value.trim();
+            const back = document.getElementById('quick-add-back').value.trim();
+            const example = document.getElementById('quick-add-example').value.trim();
+
+            const previewContainer = document.getElementById('live-card-preview');
+            const previewFront = document.getElementById('preview-front');
+            const previewBack = document.getElementById('preview-back');
+            const previewExampleContainer = document.getElementById('preview-example-container');
+            const previewExample = document.getElementById('preview-example');
+
+            if (front || back || example) {
+                previewContainer.classList.remove('hidden');
+                previewFront.innerText = front || '...';
+                previewBack.innerText = back || '...';
+
+                if (example) {
+                    previewExampleContainer.classList.remove('hidden');
+                    previewExample.innerText = example;
+                } else {
+                    previewExampleContainer.classList.add('hidden');
+                }
+            } else {
+                previewContainer.classList.add('hidden');
+            }
+        }
+
+        function handleQuickAddKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                quickAddCard();
+            }
+        }
+
         function inlineConfirmDelete(deckId, event) {
             if (event) event.stopPropagation();
 
@@ -528,13 +584,11 @@
             if (!btn) return;
 
             if (btn.dataset.confirm === "true") {
-                // Second click: Execute Delete
                 clearTimeout(deleteTimeouts[deckId]);
                 decks = decks.filter(d => d.id !== deckId);
                 saveDecksToStorage();
                 renderDecks();
             } else {
-                // First click: Request confirm state
                 btn.dataset.confirm = "true";
                 btn.innerHTML = `<span class="text-rose-400 font-bold">Potwierdź?</span>`;
                 btn.classList.add('bg-rose-950/40', 'border', 'border-rose-800/50');
@@ -551,6 +605,7 @@
             const targetId = document.getElementById('quick-add-target-deck').value;
             const front = document.getElementById('quick-add-front').value.trim();
             const back = document.getElementById('quick-add-back').value.trim();
+            const example = document.getElementById('quick-add-example').value.trim();
 
             if (!front || !back) {
                 alert('Wpisz zarówno przód, jak i tył fiszki!');
@@ -571,13 +626,17 @@
                 id: 'c_' + Date.now(),
                 front: front,
                 back: back,
+                example: example,
                 status: 0
             });
 
             saveDecksToStorage();
             document.getElementById('quick-add-front').value = '';
             document.getElementById('quick-add-back').value = '';
+            document.getElementById('quick-add-example').value = '';
+            updateLivePreview();
             renderDecks();
+            document.getElementById('quick-add-front').focus();
         }
 
         function createNewEmptyDeck() {
@@ -761,6 +820,14 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
             document.getElementById('card-front-text').innerText = card.front;
             document.getElementById('card-back-text').innerText = card.back;
 
+            const exampleEl = document.getElementById('card-example-text');
+            if (card.example) {
+                exampleEl.innerText = `"${card.example}"`;
+                exampleEl.classList.remove('hidden');
+            } else {
+                exampleEl.classList.add('hidden');
+            }
+
             isCardFlipped = false;
             const cardElem = document.getElementById('card-element');
             cardElem.classList.remove('rotate-y-180', 'card-swipe-left', 'card-swipe-right');
@@ -903,7 +970,6 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
             }, false);
         }
 
-        // PWA PROMPT LOGIC
         function checkPwaBanner() {
             const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
             const isDismissed = localStorage.getItem('pwa_banner_dismissed');
