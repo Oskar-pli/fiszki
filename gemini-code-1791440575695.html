@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pl" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fiszki — Minimalistyczna Aplikacja do Nauki</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#06080d',
+                            800: '#0b0f17',
+                            700: '#121824',
+                            600: '#1a2332',
+                            border: '#202b3c'
+                        },
+                        brand: {
+                            primary: '#3b82f6',
+                            hover: '#2563eb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #06080d;
+            color: #f3f4f6;
+            touch-action: manipulation;
+        }
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .card-swipe-left {
+            transform: translateX(-120%) rotate(-12deg) !important;
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .card-swipe-right {
+            transform: translateX(120%) rotate(12deg) !important;
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col justify-between overflow-x-hidden antialiased">
+
+    <!-- TOP HEADER -->
+    <header class="border-b border-dark-border/80 bg-dark-800/90 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('decks')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/30 to-cyan-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-xl shadow-inner">
+                    🐟
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white tracking-tight leading-none">Fiszki</h1>
+                    <p class="text-[11px] text-gray-400 font-mono mt-0.5">Szybka nauka bez lania wody</p>
+                </div>
+            </div>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center space-x-1">
+                <button id="nav-decks" onclick="switchTab('decks')" class="px-4 py-2 rounded-lg text-xs font-semibold transition text-white bg-dark-700 border border-dark-border">
+                    <i class="fa-solid fa-layer-group mr-2"></i>Talie (<span id="deck-count-badge">0</span>)
+                </button>
+                <button id="nav-generator" onclick="switchTab('generator')" class="px-4 py-2 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Generator Promptów
+                </button>
+                <button id="nav-import" onclick="switchTab('import')" class="px-4 py-2 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
+                    <i class="fa-solid fa-file-import mr-2"></i>Wklej Odpowiedź
+                </button>
+            </nav>
+
+            <button onclick="createNewEmptyDeck()" class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-blue-500/10 active:scale-95">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nowa Talia</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-5 pb-28 md:pb-8">
+
+        <!-- TAB 1: DECKS GALLERY -->
+        <section id="tab-decks" class="space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-dark-border/50 pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Twoje Talie</h2>
+                    <p class="text-xs text-gray-400">Wybierz talię, aby rozpocząć powtórki lub dodaj nową.</p>
+                </div>
+                <div class="relative min-w-[200px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <input type="text" id="search-decks" oninput="renderDecks()" placeholder="Szukaj talii..." class="w-full bg-dark-800 border border-dark-border rounded-lg pl-8 pr-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div id="decks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically Populated -->
+            </div>
+        </section>
+
+        <!-- TAB 2: PROMPT GENERATOR -->
+        <section id="tab-generator" class="hidden max-w-2xl mx-auto space-y-5">
+            <div class="border-b border-dark-border/50 pb-3">
+                <h2 class="text-lg font-bold text-white tracking-tight">Generator Promptu dla AI</h2>
+                <p class="text-xs text-gray-400">Stwórz idealne polecenie dla Chatu AI, by zwrócił czysty kod bez zbędnego tekstu.</p>
+            </div>
+
+            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 sm:p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Tematyka / Zakres materiału</label>
+                    <input type="text" id="prompt-topic" placeholder="np. Słówka angielskie C1 z dziedziny technologii" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Liczba fiszek</label>
+                        <input type="number" id="prompt-count" value="15" min="3" max="100" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Język</label>
+                        <select id="prompt-lang" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500">
+                            <option value="Polski">Polski</option>
+                            <option value="Angielski">Angielski</option>
+                            <option value="Niemiecki">Niemiecki</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="generateAIPrompt()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-blue-500/10 active:scale-98">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Generuj Prompt Anti-SLOP
+                </button>
+            </div>
+
+            <!-- Output Box -->
+            <div id="prompt-output-container" class="hidden bg-dark-800 border border-dark-border rounded-xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-mono font-semibold text-blue-400 uppercase">Gotowe polecenie dla AI</span>
+                    <button onclick="copyGeneratedPrompt()" id="copy-btn" class="px-3 py-1 bg-dark-700 hover:bg-dark-600 border border-dark-border text-xs text-gray-200 rounded-md transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> Kopiuj
+                    </button>
+                </div>
+                <pre id="prompt-output" class="bg-dark-900 p-3.5 rounded-lg text-xs font-mono text-gray-300 whitespace-pre-wrap border border-dark-border/60 max-h-56 overflow-y-auto leading-relaxed select-all"></pre>
+                <div class="flex justify-end">
+                    <button onclick="switchTab('import')" class="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                        Przejdź do wklejania odpowiedzi <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: IMPORT -->
+        <section id="tab-import" class="hidden max-w-2xl mx-auto space-y-5">
+            <div class="border-b border-dark-border/50 pb-3">
+                <h2 class="text-lg font-bold text-white tracking-tight">Wklej Odpowiedź z AI</h2>
+                <p class="text-xs text-gray-400">Wklej skopiowany tekst od Chatu AI. Aplikacja automatycznie utworzy talię.</p>
+            </div>
+
+            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 sm:p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Nazwa Nowej Talii</label>
+                    <input type="text" id="import-deck-title" placeholder="np. Słówka C1 - Tydzień 1" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Wygenerowany Tekst</label>
+                    <textarea id="import-raw-text" rows="7" placeholder="Wklej tutaj treść odpowiedzi..." class="w-full bg-dark-900 border border-dark-border rounded-lg p-3 text-xs font-mono text-gray-200 focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+
+                <button onclick="parseAndCreateDeck()" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition shadow-lg shadow-green-600/10 active:scale-98">
+                    <i class="fa-solid fa-file-circle-check"></i> Utwórz Talię i Rozpocznij Naukę
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 4: STUDY VIEW -->
+        <section id="tab-study" class="hidden max-w-lg mx-auto space-y-4">
+            <div class="flex items-center justify-between border-b border-dark-border/50 pb-3">
+                <button onclick="switchTab('decks')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Powrót
+                </button>
+                <span id="study-deck-title" class="text-xs font-bold text-white truncate max-w-[180px]">Nazwa Talii</span>
+                <span id="study-progress-text" class="text-xs font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">1 / 10</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-dark-800 rounded-full h-1 overflow-hidden border border-dark-border">
+                <div id="study-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- FLASHCARD (Touch Optimized) -->
+            <div class="perspective-1000 w-full min-h-[300px] sm:min-h-[340px] cursor-pointer my-2" onclick="flipCard()">
+                <div id="card-element" class="relative w-full h-full min-h-[300px] sm:min-h-[340px] transform-style-3d rounded-2xl border border-dark-border bg-dark-800 p-6 flex flex-col justify-between shadow-2xl transition-all">
+                    
+                    <!-- FRONT -->
+                    <div id="card-front" class="absolute inset-0 backface-hidden p-6 flex flex-col justify-between bg-dark-800 rounded-2xl border border-dark-border select-none">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-mono tracking-wider text-gray-500 uppercase">PYTANIE</span>
+                            <span class="text-[11px] text-gray-500 font-mono"><i class="fa-solid fa-rotate text-[10px] mr-1"></i> Kliknij / Dotknij</span>
+                        </div>
+                        <div class="my-auto text-center py-4">
+                            <h3 id="card-front-text" class="text-xl sm:text-2xl font-bold text-white leading-relaxed"></h3>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-[10px] text-gray-500">Dotknij kartę, aby zobaczyć odpowiedź</span>
+                        </div>
+                    </div>
+
+                    <!-- BACK -->
+                    <div id="card-back" class="absolute inset-0 backface-hidden rotate-y-180 p-6 flex flex-col justify-between bg-dark-700 rounded-2xl border border-blue-500/30 select-none">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-mono tracking-wider text-blue-400 uppercase">ODPOWIEDŹ</span>
+                            <span class="text-[10px] text-gray-400">Fiszki</span>
+                        </div>
+                        
+                        <div class="my-auto text-center py-2 space-y-3 overflow-y-auto max-h-[200px]">
+                            <p id="card-back-text" class="text-base sm:text-lg font-medium text-gray-100 leading-relaxed"></p>
+                        </div>
+
+                        <div class="text-center">
+                            <span class="text-[10px] text-gray-400">Oceń stopień zapamiętania poniżej</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RATING BUTTONS (3-LEVEL) -->
+            <div id="rating-controls" class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="rateCard(1)" class="py-3 px-1 bg-red-950/40 hover:bg-red-900/60 active:bg-red-900 border border-red-800/50 text-red-300 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                    <span class="font-bold">1. Trudne</span>
+                    <span class="text-[9px] opacity-60">Nie umiem</span>
+                </button>
+                <button onclick="rateCard(2)" class="py-3 px-1 bg-amber-950/40 hover:bg-amber-900/60 active:bg-amber-900 border border-amber-800/50 text-amber-300 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                    <span class="font-bold">2. Średnie</span>
+                    <span class="text-[9px] opacity-60">Do powtórki</span>
+                </button>
+                <button onclick="rateCard(3)" class="py-3 px-1 bg-green-950/40 hover:bg-green-900/60 active:bg-green-900 border border-green-800/50 text-green-300 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-0.5 transition">
+                    <span class="font-bold">3. Łatwe</span>
+                    <span class="text-[9px] opacity-60">Opanowane</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 5: EDIT DECK -->
+        <section id="tab-edit" class="hidden max-w-2xl mx-auto space-y-5">
+            <div class="flex items-center justify-between border-b border-dark-border/50 pb-3">
+                <button onclick="switchTab('decks')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Wróć
+                </button>
+                <h2 class="text-base font-bold text-white">Edytuj Talię</h2>
+                <button id="edit-delete-deck-btn" class="px-2.5 py-1.5 bg-rose-950/50 hover:bg-rose-900/80 border border-rose-800/60 text-rose-300 text-xs rounded-lg transition flex items-center gap-1">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i> Usuń
+                </button>
+            </div>
+
+            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Tytuł Talii</label>
+                    <input type="text" id="edit-deck-title" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Cards List -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold text-gray-300 uppercase">Fiszki w talii</h3>
+                    <button onclick="addNewCardToEdit()" class="px-2.5 py-1 bg-dark-700 hover:bg-dark-600 border border-dark-border text-xs text-white rounded-lg transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Dodaj Fiszkę
+                    </button>
+                </div>
+
+                <div id="edit-cards-container" class="space-y-2">
+                    <!-- Dynamic cards -->
+                </div>
+            </div>
+
+            <div class="pt-3 flex justify-end">
+                <button onclick="saveDeckEdits()" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition shadow-lg shadow-blue-500/10">
+                    Zapisz Zmiany
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MOBILE BOTTOM NAVBAR -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 border-t border-dark-border bg-dark-800/95 backdrop-blur-md z-40 px-2 py-1.5">
+        <div class="grid grid-cols-3 gap-1 text-center">
+            <button onclick="switchTab('decks')" id="mob-nav-decks" class="py-1.5 flex flex-col items-center text-blue-400">
+                <i class="fa-solid fa-layer-group text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">Talie</span>
+            </button>
+            <button onclick="switchTab('generator')" id="mob-nav-generator" class="py-1.5 flex flex-col items-center text-gray-400">
+                <i class="fa-solid fa-wand-magic-sparkles text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">Prompt</span>
+            </button>
+            <button onclick="switchTab('import')" id="mob-nav-import" class="py-1.5 flex flex-col items-center text-gray-400">
+                <i class="fa-solid fa-file-import text-base"></i>
+                <span class="text-[10px] font-medium mt-0.5">Import</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- APP LOGIC -->
+    <script>
+        let decks = [];
+        let currentDeckId = null;
+        let currentCardIndex = 0;
+        let isCardFlipped = false;
+        let editingDeck = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDecksFromStorage();
+            renderDecks();
+            setupKeyboardShortcuts();
+            setupTouchGestures();
+        });
+
+        function loadDecksFromStorage() {
+            const saved = localStorage.getItem('fiszki_app_decks_v3');
+            if (saved) {
+                try {
+                    decks = JSON.parse(saved);
+                } catch(e) {
+                    decks = [];
+                }
+            } else {
+                // Initial Default Deck
+                decks = [{
+                    id: 'deck_demo_1',
+                    title: 'Słówka Angielskie — Technologia',
+                    cards: [
+                        { id: 'c1', front: 'Artificial Intelligence (AI)', back: 'Sztuczna Inteligencja', status: 0 },
+                        { id: 'c2', front: 'Machine Learning', back: 'Uczenie Maszynowe', status: 0 },
+                        { id: 'c3', front: 'Cloud Computing', back: 'Przetwarzanie w Chmurze', status: 0 }
+                    ]
+                }];
+                saveDecksToStorage();
+            }
+        }
+
+        function saveDecksToStorage() {
+            localStorage.setItem('fiszki_app_decks_v3', JSON.stringify(decks));
+            updateDeckBadge();
+        }
+
+        function updateDeckBadge() {
+            const badge = document.getElementById('deck-count-badge');
+            if (badge) badge.innerText = decks.length;
+        }
+
+        function switchTab(tabName) {
+            ['decks', 'generator', 'import', 'study', 'edit'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (el) el.classList.add('hidden');
+                
+                const navEl = document.getElementById(`nav-${t}`);
+                if (navEl) {
+                    navEl.classList.remove('bg-dark-700', 'text-white', 'border', 'border-dark-border');
+                    navEl.classList.add('text-gray-400');
+                }
+
+                const mobNav = document.getElementById(`mob-nav-${t}`);
+                if (mobNav) {
+                    mobNav.classList.remove('text-blue-400');
+                    mobNav.classList.add('text-gray-400');
+                }
+            });
+
+            const target = document.getElementById(`tab-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            const targetNav = document.getElementById(`nav-${tabName}`);
+            if (targetNav) {
+                targetNav.classList.add('bg-dark-700', 'text-white', 'border', 'border-dark-border');
+                targetNav.classList.remove('text-gray-400');
+            }
+
+            const mobTarget = document.getElementById(`mob-nav-${tabName}`);
+            if (mobTarget) {
+                mobTarget.classList.add('text-blue-400');
+                mobTarget.classList.remove('text-gray-400');
+            }
+
+            if (tabName === 'decks') renderDecks();
+        }
+
+        function renderDecks() {
+            updateDeckBadge();
+            const container = document.getElementById('decks-grid');
+            const searchQuery = (document.getElementById('search-decks')?.value || '').toLowerCase();
+            
+            if (!container) return;
+            container.innerHTML = '';
+
+            const filteredDecks = decks.filter(d => d.title.toLowerCase().includes(searchQuery));
+
+            if (filteredDecks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center border border-dashed border-dark-border rounded-2xl bg-dark-800/40">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-dark-700 flex items-center justify-center text-gray-400 mb-3 text-xl">
+                            🐟
+                        </div>
+                        <h3 class="text-sm font-semibold text-white">Brak talii</h3>
+                        <p class="text-xs text-gray-500 max-w-xs mx-auto mt-1 mb-4">Stwórz swoją pierwszą talię lub użyj generatora promptów.</p>
+                        <button onclick="createNewEmptyDeck()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Utwórz Talię
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredDecks.forEach(deck => {
+                const total = deck.cards.length;
+                const mastered = deck.cards.filter(c => c.status === 3).length;
+                const progressPct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = 'group relative bg-dark-800 border border-dark-border hover:border-blue-500/50 rounded-xl p-4 flex flex-col justify-between transition-all duration-200 shadow-sm';
+                cardEl.innerHTML = `
+                    <div class="space-y-2 mb-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <h3 class="text-sm font-bold text-white group-hover:text-blue-400 transition leading-snug truncate">${escapeHtml(deck.title)}</h3>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="deleteDeck('${deck.id}', event)" title="Usuń" class="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-950/30 rounded transition">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                                <button onclick="openDeckEditor('${deck.id}', event)" title="Edytuj" class="p-1.5 text-gray-500 hover:text-gray-200 hover:bg-dark-700 rounded transition">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-dark-border/40 space-y-2.5">
+                        <div class="flex items-center justify-between text-[10px] text-gray-400 font-mono">
+                            <span>Liczba fiszek: <strong class="text-white">${total}</strong></span>
+                            <span>Opanowanie: <strong class="text-blue-400">${progressPct}%</strong></span>
+                        </div>
+                        <div class="w-full bg-dark-700 h-1 rounded-full overflow-hidden">
+                            <div class="bg-blue-500 h-full transition-all duration-300" style="width: ${progressPct}%"></div>
+                        </div>
+                        <button onclick="startStudy('${deck.id}')" class="w-full py-2 bg-dark-700 hover:bg-blue-600 hover:text-white border border-dark-border text-gray-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 active:scale-98">
+                            <i class="fa-solid fa-play text-[9px]"></i> Rozpocznij Naukę
+                        </button>
+                    </div>
+                `;
+                container.appendChild(cardEl);
+            });
+        }
+
+        function deleteDeck(deckId, event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+
+            const deckToDelete = decks.find(d => d.id === deckId);
+            const deckName = deckToDelete ? deckToDelete.title : 'tę talię';
+
+            if (confirm(`Czy na pewno chcesz usunąć talię "${deckName}"?`)) {
+                decks = decks.filter(d => d.id !== deckId);
+                saveDecksToStorage();
+                renderDecks();
+            }
+        }
+
+        function createNewEmptyDeck() {
+            const title = prompt("Podaj nazwę nowej talii:", "Nowa Talia");
+            if (!title || !title.trim()) return;
+
+            const newDeck = {
+                id: 'deck_' + Date.now(),
+                title: title.trim(),
+                cards: [
+                    { id: 'c1', front: 'Przykładowe pojęcie', back: 'Przykładowa odpowiedź', status: 0 }
+                ]
+            };
+
+            decks.unshift(newDeck);
+            saveDecksToStorage();
+            renderDecks();
+            openDeckEditor(newDeck.id);
+        }
+
+        function generateAIPrompt() {
+            const topic = document.getElementById('prompt-topic').value.trim() || 'Słówka i pojęcia';
+            const count = document.getElementById('prompt-count').value || 15;
+            const lang = document.getElementById('prompt-lang').value;
+
+            const strictPrompt = `Wygeneruj dokładnie ${count} fiszek do nauki na temat: "${topic}".
+Język odpowiedzi: ${lang}.
+
+ZASADY FORMATOWANIA (BEZ LANI WODY):
+1. Format każdej linii ma wyglądać dokładnie tak:
+   Pojęcie / Pytanie | Odpowiedź / Wyjaśnienie
+2. BRAK wstępów ("Oto fiszki:"), brak komentarzy, brak podsumowań.
+3. BRAK formatowania Markdown (żadnych pogrubień **, żadnych bloków kodu \`\`\`).
+4. Każda fiszka w nowej linii.
+
+PRZYKŁAD WYJŚCIA:
+Apple | Jabłko
+Computer | Komputer`;
+
+            document.getElementById('prompt-output').innerText = strictPrompt;
+            document.getElementById('prompt-output-container').classList.remove('hidden');
+        }
+
+        function copyGeneratedPrompt() {
+            const text = document.getElementById('prompt-output').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerHTML = `<i class="fa-solid fa-check text-green-400"></i> Skopiowano!`;
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="fa-regular fa-copy"></i> Kopiuj`;
+                }, 2000);
+            });
+        }
+
+        function parseAndCreateDeck() {
+            const rawText = document.getElementById('import-raw-text').value.trim();
+            let title = document.getElementById('import-deck-title').value.trim();
+
+            if (!rawText) {
+                alert('Proszę wkleić tekst od AI!');
+                return;
+            }
+
+            if (!title) title = 'Talia Fiszki #' + (decks.length + 1);
+
+            const lines = rawText.split('\n');
+            const parsedCards = [];
+
+            lines.forEach((line, idx) => {
+                const cleanedLine = line.replace(/^[\d\.\-\*\s]+/, '').trim();
+                if (!cleanedLine) return;
+
+                const parts = cleanedLine.split('|');
+                if (parts.length >= 2) {
+                    const front = parts[0].trim();
+                    const back = parts[1].trim();
+
+                    if (front && back) {
+                        parsedCards.push({
+                            id: 'c_' + idx + '_' + Date.now(),
+                            front: front,
+                            back: back,
+                            status: 0
+                        });
+                    }
+                }
+            });
+
+            if (parsedCards.length === 0) {
+                alert('Nie udało się dopasować formatu. Upewnij się, że tekst zawiera znak "|" pomiędzy pojęciem a odpowiedzią.');
+                return;
+            }
+
+            const newDeck = {
+                id: 'deck_' + Date.now(),
+                title: title,
+                cards: parsedCards
+            };
+
+            decks.unshift(newDeck);
+            saveDecksToStorage();
+            
+            document.getElementById('import-raw-text').value = '';
+            document.getElementById('import-deck-title').value = '';
+
+            startStudy(newDeck.id);
+        }
+
+        function startStudy(deckId) {
+            const deck = decks.find(d => d.id === deckId);
+            if (!deck || deck.cards.length === 0) {
+                alert('Talia jest pusta!');
+                return;
+            }
+
+            currentDeckId = deckId;
+            currentCardIndex = 0;
+            isCardFlipped = false;
+
+            document.getElementById('study-deck-title').innerText = deck.title;
+            switchTab('study');
+            renderCurrentCard();
+        }
+
+        function renderCurrentCard() {
+            const deck = decks.find(d => d.id === currentDeckId);
+            if (!deck) return;
+
+            const card = deck.cards[currentCardIndex];
+            const total = deck.cards.length;
+
+            document.getElementById('study-progress-text').innerText = `${currentCardIndex + 1} / ${total}`;
+            document.getElementById('study-progress-bar').style.width = `${((currentCardIndex + 1) / total) * 100}%`;
+
+            document.getElementById('card-front-text').innerText = card.front;
+            document.getElementById('card-back-text').innerText = card.back;
+
+            isCardFlipped = false;
+            const cardElem = document.getElementById('card-element');
+            cardElem.classList.remove('rotate-y-180', 'card-swipe-left', 'card-swipe-right');
+        }
+
+        function flipCard() {
+            isCardFlipped = !isCardFlipped;
+            const cardElem = document.getElementById('card-element');
+            if (isCardFlipped) {
+                cardElem.classList.add('rotate-y-180');
+            } else {
+                cardElem.classList.remove('rotate-y-180');
+            }
+        }
+
+        function rateCard(rating) {
+            const deck = decks.find(d => d.id === currentDeckId);
+            if (!deck) return;
+
+            deck.cards[currentCardIndex].status = rating;
+            saveDecksToStorage();
+
+            const cardElem = document.getElementById('card-element');
+            if (rating === 1) {
+                cardElem.classList.add('card-swipe-left');
+            } else {
+                cardElem.classList.add('card-swipe-right');
+            }
+
+            setTimeout(() => {
+                if (currentCardIndex < deck.cards.length - 1) {
+                    currentCardIndex++;
+                    renderCurrentCard();
+                } else {
+                    alert('🎉 Sesja zakończona! Dobra robota!');
+                    switchTab('decks');
+                }
+            }, 220);
+        }
+
+        function openDeckEditor(deckId, event) {
+            if (event) event.stopPropagation();
+
+            editingDeck = JSON.parse(JSON.stringify(decks.find(d => d.id === deckId)));
+            if (!editingDeck) return;
+
+            document.getElementById('edit-deck-title').value = editingDeck.title;
+
+            const deleteBtn = document.getElementById('edit-delete-deck-btn');
+            deleteBtn.onclick = (e) => deleteDeck(editingDeck.id, e);
+
+            renderEditCards();
+            switchTab('edit');
+        }
+
+        function renderEditCards() {
+            const container = document.getElementById('edit-cards-container');
+            container.innerHTML = '';
+
+            editingDeck.cards.forEach((card, idx) => {
+                const row = document.createElement('div');
+                row.className = 'bg-dark-800 border border-dark-border p-2.5 rounded-lg flex items-center gap-2';
+                row.innerHTML = `
+                    <span class="text-[10px] font-mono text-gray-500 w-4">${idx + 1}.</span>
+                    <input type="text" value="${escapeHtml(card.front)}" onchange="updateCardEdit(${idx}, 'front', this.value)" placeholder="Przód" class="flex-1 bg-dark-900 border border-dark-border rounded px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                    <input type="text" value="${escapeHtml(card.back)}" onchange="updateCardEdit(${idx}, 'back', this.value)" placeholder="Tył" class="flex-1 bg-dark-900 border border-dark-border rounded px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                    <button onclick="removeCardFromEdit(${idx})" class="text-gray-500 hover:text-rose-400 p-1">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateCardEdit(index, field, value) {
+            if (editingDeck && editingDeck.cards[index]) {
+                editingDeck.cards[index][field] = value;
+            }
+        }
+
+        function removeCardFromEdit(index) {
+            if (editingDeck) {
+                editingDeck.cards.splice(index, 1);
+                renderEditCards();
+            }
+        }
+
+        function addNewCardToEdit() {
+            if (editingDeck) {
+                editingDeck.cards.push({
+                    id: 'c_' + Date.now(),
+                    front: '',
+                    back: '',
+                    status: 0
+                });
+                renderEditCards();
+            }
+        }
+
+        function saveDeckEdits() {
+            if (!editingDeck) return;
+
+            editingDeck.title = document.getElementById('edit-deck-title').value.trim() || editingDeck.title;
+
+            const idx = decks.findIndex(d => d.id === editingDeck.id);
+            if (idx !== -1) {
+                decks[idx] = editingDeck;
+                saveDecksToStorage();
+                switchTab('decks');
+            }
+        }
+
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                const isStudyActive = !document.getElementById('tab-study').classList.contains('hidden');
+                if (!isStudyActive) return;
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    flipCard();
+                } else if (e.key === '1') {
+                    rateCard(1);
+                } else if (e.key === '2') {
+                    rateCard(2);
+                } else if (e.key === '3') {
+                    rateCard(3);
+                }
+            });
+        }
+
+        function setupTouchGestures() {
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            const cardElem = document.getElementById('card-element');
+            if (!cardElem) return;
+
+            cardElem.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, false);
+
+            cardElem.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                const diff = touchEndX - touchStartX;
+                if (Math.abs(diff) > 50) {
+                    if (diff < 0) {
+                        rateCard(1); // Swipe Left = Trudne
+                    } else {
+                        rateCard(3); // Swipe Right = Łatwe
+                    }
+                }
+            }, false);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
