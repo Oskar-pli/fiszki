@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#06080d">
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZpc3praSIsCiAgInNob3J0X25hbWUiOiAiRmlzemtpIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwNjA4MGQiLAogICJ0aGVtZV9jb2xvciI6ICIjMDYwODBkIgp9">
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -85,35 +85,39 @@
                 <h1 class="text-base font-bold text-white tracking-tight">Fiszki</h1>
             </div>
 
+            <!-- Desktop Navigation -->
             <nav class="hidden md:flex items-center space-x-1">
                 <button id="nav-decks" onclick="switchTab('decks')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white bg-dark-700 border border-dark-border">
                     <i class="fa-solid fa-layer-group mr-1.5"></i>Talie (<span id="deck-count-badge">0</span>)
                 </button>
+                <button id="nav-stats" onclick="switchTab('stats')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
+                    <i class="fa-solid fa-chart-line mr-1.5"></i>Statystyki
+                </button>
                 <button id="nav-generator" onclick="switchTab('generator')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
-                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generator Promptów
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generator AI
                 </button>
                 <button id="nav-import" onclick="switchTab('import')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
                     <i class="fa-solid fa-file-import mr-1.5"></i>Wklej Odpowiedź
                 </button>
             </nav>
 
-            <button onclick="createNewEmptyDeck()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-95">
+            <button onclick="promptCreateDeckModal()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-lg shadow-blue-500/10">
                 <i class="fa-solid fa-plus text-[10px]"></i> <span class="hidden sm:inline">Nowa Talia</span>
             </button>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT AREA -->
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 pb-32 md:pb-8">
 
-        <!-- TAB 1: DECKS GALLERY & FAST INPUT -->
+        <!-- TAB 1: DECKS GALLERY & IN-APP FAST INPUT -->
         <section id="tab-decks" class="space-y-4">
             
             <!-- FAST IN-APP INPUT PANEL -->
             <div class="bg-dark-800 border border-dark-border/80 rounded-xl p-4 shadow-xl space-y-3">
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt"></i> Dodaj fiszkę do talii
+                        <i class="fa-solid fa-bolt"></i> Szybkie dodawanie fiszki
                     </span>
                     <select id="quick-add-target-deck" class="bg-dark-900 border border-dark-border rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500 max-w-[180px] truncate">
                         <!-- Dynamic options -->
@@ -136,7 +140,7 @@
                     <input type="text" id="quick-add-example" oninput="updateLivePreview()" onkeydown="handleQuickAddKeydown(event)" placeholder="np. Build emotional resilience in difficult times." class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
                 </div>
 
-                <!-- Live Card Preview Container -->
+                <!-- Live Preview Container -->
                 <div id="live-card-preview" class="hidden pt-2 border-t border-dark-border/40">
                     <div class="bg-dark-900/80 border border-blue-500/30 rounded-lg p-3 text-xs flex items-center justify-between gap-2">
                         <div class="space-y-1">
@@ -164,7 +168,80 @@
             </div>
         </section>
 
-        <!-- TAB 2: PROMPT GENERATOR -->
+        <!-- TAB 2: LOCAL USER STATS PANEL -->
+        <section id="tab-stats" class="hidden max-w-xl mx-auto space-y-4">
+            <div class="border-b border-dark-border/50 pb-2 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-bold text-white">Twój Profil i Statystyki</h2>
+                    <p class="text-xs text-gray-400">Dane zapisane lokalnie w pamięci tego urządzenia.</p>
+                </div>
+                <span id="user-profile-id" class="text-[10px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-md">ID: ---</span>
+            </div>
+
+            <!-- Overview Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
+                    <span class="text-[10px] font-mono text-gray-400 uppercase">Ukończone sesje</span>
+                    <p id="stat-sessions" class="text-xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
+                    <span class="text-[10px] font-mono text-gray-400 uppercase">Przejrzane karty</span>
+                    <p id="stat-reviewed" class="text-xl font-bold text-blue-400">0</p>
+                </div>
+                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
+                    <span class="text-[10px] font-mono text-gray-400 uppercase">Skuteczność</span>
+                    <p id="stat-accuracy" class="text-xl font-bold text-green-400">0%</p>
+                </div>
+                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
+                    <span class="text-[10px] font-mono text-gray-400 uppercase">Seria dni (Streak)</span>
+                    <p id="stat-streak" class="text-xl font-bold text-amber-400">0 🔥</p>
+                </div>
+            </div>
+
+            <!-- Rating Breakdown -->
+            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 space-y-3">
+                <h3 class="text-xs font-bold text-gray-300 uppercase">Rozkład ocenianiach odpowiedzi</h3>
+                <div class="space-y-2">
+                    <div>
+                        <div class="flex justify-between text-[11px] text-gray-400 mb-1">
+                            <span>Łatwe (Opanowane)</span>
+                            <span id="stat-easy-count" class="text-green-400 font-bold">0</span>
+                        </div>
+                        <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden border border-dark-border">
+                            <div id="stat-easy-bar" class="bg-green-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-[11px] text-gray-400 mb-1">
+                            <span>Średnie (Do powtórki)</span>
+                            <span id="stat-medium-count" class="text-amber-400 font-bold">0</span>
+                        </div>
+                        <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden border border-dark-border">
+                            <div id="stat-medium-bar" class="bg-amber-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-[11px] text-gray-400 mb-1">
+                            <span>Trudne (Nie umiem)</span>
+                            <span id="stat-hard-count" class="text-rose-400 font-bold">0</span>
+                        </div>
+                        <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden border border-dark-border">
+                            <div id="stat-hard-bar" class="bg-rose-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="resetProfileStats()" class="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-300 text-xs rounded-lg transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Zresetuj statystyki tego urządzenia
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 3: PROMPT GENERATOR -->
         <section id="tab-generator" class="hidden max-w-xl mx-auto space-y-4">
             <div class="border-b border-dark-border/50 pb-2">
                 <h2 class="text-sm font-bold text-white">Generator Promptów dla AI</h2>
@@ -220,7 +297,7 @@
             </div>
         </section>
 
-        <!-- TAB 3: IMPORT RESPONSE -->
+        <!-- TAB 4: IMPORT RESPONSE -->
         <section id="tab-import" class="hidden max-w-xl mx-auto space-y-4">
             <div class="border-b border-dark-border/50 pb-2">
                 <h2 class="text-sm font-bold text-white">Wklej Odpowiedź z AI</h2>
@@ -252,7 +329,7 @@
             </div>
         </section>
 
-        <!-- TAB 4: STUDY VIEW -->
+        <!-- TAB 5: STUDY VIEW -->
         <section id="tab-study" class="hidden max-w-sm mx-auto space-y-3">
             <div class="flex items-center justify-between border-b border-dark-border/50 pb-2">
                 <button onclick="switchTab('decks')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
@@ -304,7 +381,7 @@
             </div>
         </section>
 
-        <!-- TAB 5: EDIT DECK -->
+        <!-- TAB 6: EDIT DECK -->
         <section id="tab-edit" class="hidden max-w-xl mx-auto space-y-4">
             <div class="flex items-center justify-between border-b border-dark-border/50 pb-2">
                 <button onclick="switchTab('decks')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
@@ -340,18 +417,22 @@
 
     <!-- MOBILE BOTTOM NAVBAR -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 border-t border-dark-border bg-dark-800/95 backdrop-blur-md z-40 px-2 py-1.5">
-        <div class="grid grid-cols-3 gap-1 text-center">
+        <div class="grid grid-cols-4 gap-1 text-center">
             <button onclick="switchTab('decks')" id="mob-nav-decks" class="py-1 flex flex-col items-center text-blue-400">
                 <i class="fa-solid fa-layer-group text-sm"></i>
-                <span class="text-[10px] mt-0.5">Talie</span>
+                <span class="text-[9px] mt-0.5">Talie</span>
+            </button>
+            <button onclick="switchTab('stats')" id="mob-nav-stats" class="py-1 flex flex-col items-center text-gray-400">
+                <i class="fa-solid fa-chart-line text-sm"></i>
+                <span class="text-[9px] mt-0.5">Profil</span>
             </button>
             <button onclick="switchTab('generator')" id="mob-nav-generator" class="py-1 flex flex-col items-center text-gray-400">
                 <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
-                <span class="text-[10px] mt-0.5">Prompt</span>
+                <span class="text-[9px] mt-0.5">Prompt</span>
             </button>
             <button onclick="switchTab('import')" id="mob-nav-import" class="py-1 flex flex-col items-center text-gray-400">
                 <i class="fa-solid fa-file-import text-sm"></i>
-                <span class="text-[10px] mt-0.5">Import</span>
+                <span class="text-[9px] mt-0.5">Import</span>
             </button>
         </div>
     </div>
@@ -375,6 +456,36 @@
         </div>
     </div>
 
+    <!-- IN-APP CUSTOM MODAL SYSTEM (REPLACES BROWSER ALERTS/PROMPTS) -->
+    <div id="custom-modal-backdrop" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-dark-800 border border-dark-border rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex items-center gap-3">
+                <div id="modal-icon-container" class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-lg font-bold shrink-0">
+                    🐟
+                </div>
+                <div>
+                    <h3 id="modal-title" class="text-sm font-bold text-white">Tytuł Modala</h3>
+                    <p id="modal-subtitle" class="text-xs text-gray-400">Opis lub wiadomość dla użytkownika</p>
+                </div>
+            </div>
+
+            <!-- Optional Input Container -->
+            <div id="modal-input-container" class="hidden">
+                <input type="text" id="modal-input-field" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-border/50">
+                <button id="modal-btn-cancel" onclick="closeCustomModal()" class="hidden px-3.5 py-1.5 bg-dark-700 hover:bg-dark-600 border border-dark-border text-xs font-semibold text-gray-300 rounded-lg transition">
+                    Anuluj
+                </button>
+                <button id="modal-btn-confirm" onclick="closeCustomModal()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white rounded-lg transition shadow-lg shadow-blue-500/10">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- APP LOGIC -->
     <script>
         let decks = [];
@@ -384,8 +495,10 @@
         let editingDeck = null;
         let generatorMode = 'text';
         let deleteTimeouts = {};
+        let userStats = { id: '', sessions: 0, reviewed: 0, easy: 0, medium: 0, hard: 0, lastStudyDate: '', streak: 0 };
 
         document.addEventListener('DOMContentLoaded', () => {
+            initUserProfile();
             loadDecksFromStorage();
             renderDecks();
             populateDeckSelectors();
@@ -394,8 +507,67 @@
             checkPwaBanner();
         });
 
+        function initUserProfile() {
+            const savedStats = localStorage.getItem('fiszki_user_profile_v1');
+            if (savedStats) {
+                try { userStats = JSON.parse(savedStats); } catch(e) { createNewUserProfile(); }
+            } else {
+                createNewUserProfile();
+            }
+            renderStats();
+        }
+
+        function createNewUserProfile() {
+            const randomId = 'USR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            userStats = { id: randomId, sessions: 0, reviewed: 0, easy: 0, medium: 0, hard: 0, lastStudyDate: '', streak: 0 };
+            saveUserProfile();
+        }
+
+        function saveUserProfile() {
+            localStorage.setItem('fiszki_user_profile_v1', JSON.stringify(userStats));
+            renderStats();
+        }
+
+        function renderStats() {
+            document.getElementById('user-profile-id').innerText = `ID: ${userStats.id}`;
+            document.getElementById('stat-sessions').innerText = userStats.sessions;
+            document.getElementById('stat-reviewed').innerText = userStats.reviewed;
+            
+            const totalRated = userStats.easy + userStats.medium + userStats.hard;
+            const accuracy = totalRated > 0 ? Math.round((userStats.easy / totalRated) * 100) : 0;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('stat-streak').innerText = `${userStats.streak} 🔥`;
+
+            document.getElementById('stat-easy-count').innerText = userStats.easy;
+            document.getElementById('stat-medium-count').innerText = userStats.medium;
+            document.getElementById('stat-hard-count').innerText = userStats.hard;
+
+            document.getElementById('stat-easy-bar').style.width = totalRated > 0 ? `${(userStats.easy / totalRated) * 100}%` : '0%';
+            document.getElementById('stat-medium-bar').style.width = totalRated > 0 ? `${(userStats.medium / totalRated) * 100}%` : '0%';
+            document.getElementById('stat-hard-bar').style.width = totalRated > 0 ? `${(userStats.hard / totalRated) * 100}%` : '0%';
+        }
+
+        function resetProfileStats() {
+            showCustomModal({
+                title: 'Zresetować statystyki?',
+                subtitle: 'Twoje postępy na tym urządzeniu zostaną wyzerowane. Unikalne ID profilu pozostanie bez zmian.',
+                icon: '🔄',
+                showCancel: true,
+                onConfirm: () => {
+                    userStats.sessions = 0;
+                    userStats.reviewed = 0;
+                    userStats.easy = 0;
+                    userStats.medium = 0;
+                    userStats.hard = 0;
+                    userStats.streak = 0;
+                    userStats.lastStudyDate = '';
+                    saveUserProfile();
+                }
+            });
+        }
+
         function loadDecksFromStorage() {
-            const saved = localStorage.getItem('fiszki_app_decks_v5');
+            const saved = localStorage.getItem('fiszki_app_decks_v6');
             if (saved) {
                 try { decks = JSON.parse(saved); } catch(e) { decks = []; }
             } else {
@@ -412,7 +584,7 @@
         }
 
         function saveDecksToStorage() {
-            localStorage.setItem('fiszki_app_decks_v5', JSON.stringify(decks));
+            localStorage.setItem('fiszki_app_decks_v6', JSON.stringify(decks));
             updateDeckBadge();
             populateDeckSelectors();
         }
@@ -445,7 +617,7 @@
         }
 
         function switchTab(tabName) {
-            ['decks', 'generator', 'import', 'study', 'edit'].forEach(t => {
+            ['decks', 'stats', 'generator', 'import', 'study', 'edit'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.classList.add('hidden');
                 
@@ -478,6 +650,7 @@
             }
 
             if (tabName === 'decks') renderDecks();
+            if (tabName === 'stats') renderStats();
         }
 
         function renderDecks() {
@@ -493,7 +666,7 @@
                 container.innerHTML = `
                     <div class="col-span-full py-8 text-center border border-dashed border-dark-border rounded-xl bg-dark-800/40">
                         <p class="text-xs text-gray-500">Brak talii w bibliotece.</p>
-                        <button onclick="createNewEmptyDeck()" class="mt-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg">
+                        <button onclick="promptCreateDeckModal()" class="mt-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg">
                             + Stwórz Talię
                         </button>
                     </div>
@@ -608,7 +781,11 @@
             const example = document.getElementById('quick-add-example').value.trim();
 
             if (!front || !back) {
-                alert('Wpisz zarówno przód, jak i tył fiszki!');
+                showCustomModal({
+                    title: 'Uzupełnij dane fiszki',
+                    subtitle: 'Wpisz pojęcie (przód) oraz jego odpowiedź (tył), aby dodać kartę.',
+                    icon: '⚠️'
+                });
                 return;
             }
 
@@ -639,20 +816,27 @@
             document.getElementById('quick-add-front').focus();
         }
 
-        function createNewEmptyDeck() {
-            const title = prompt("Podaj nazwę nowej talii:", "Nowa Talia");
-            if (!title || !title.trim()) return;
-
-            const newDeck = {
-                id: 'deck_' + Date.now(),
-                title: title.trim(),
-                cards: []
-            };
-
-            decks.unshift(newDeck);
-            saveDecksToStorage();
-            renderDecks();
-            openDeckEditor(newDeck.id);
+        function promptCreateDeckModal() {
+            showCustomModal({
+                title: 'Utwórz nową talię',
+                subtitle: 'Wpisz nazwę nowej talii fiszek:',
+                icon: '📁',
+                showInput: true,
+                inputPlaceholder: 'np. Historia - Wiosna Ludów',
+                showCancel: true,
+                onConfirm: (inputValue) => {
+                    if (!inputValue || !inputValue.trim()) return;
+                    const newDeck = {
+                        id: 'deck_' + Date.now(),
+                        title: inputValue.trim(),
+                        cards: []
+                    };
+                    decks.unshift(newDeck);
+                    saveDecksToStorage();
+                    renderDecks();
+                    openDeckEditor(newDeck.id);
+                }
+            });
         }
 
         function openAiAddForDeck(deckId) {
@@ -742,7 +926,7 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
             const targetDeckVal = document.getElementById('import-target-deck').value;
 
             if (!rawText) {
-                alert('Proszę wkleić tekst od AI!');
+                showCustomModal({ title: 'Brak tekstu', subtitle: 'Wklej wygenerowaną treść od AI.', icon: '⚠️' });
                 return;
             }
 
@@ -769,7 +953,11 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
             });
 
             if (parsedCards.length === 0) {
-                alert('Nie udało się sparować fiszek. Upewnij się, że tekst zawiera znak "|" miedzy przodem a tyłem.');
+                showCustomModal({
+                    title: 'Nieprawidłowy format',
+                    subtitle: 'Nie udało się sparować fiszek. Upewnij się, że tekst zawiera znak "|" między pojęciem a odpowiedzią.',
+                    icon: '❌'
+                });
                 return;
             }
 
@@ -794,7 +982,7 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
         function startStudy(deckId) {
             const deck = decks.find(d => d.id === deckId);
             if (!deck || deck.cards.length === 0) {
-                alert('Talia jest pusta! Dodaj najpierw hasła.');
+                showCustomModal({ title: 'Talia jest pusta', subtitle: 'Dodaj najpierw fiszki do tej talii.', icon: '📭' });
                 return;
             }
 
@@ -850,6 +1038,19 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
             deck.cards[currentCardIndex].status = rating;
             saveDecksToStorage();
 
+            // Track User Stats
+            userStats.reviewed++;
+            if (rating === 3) userStats.easy++;
+            else if (rating === 2) userStats.medium++;
+            else if (rating === 1) userStats.hard++;
+
+            const today = new Date().toISOString().split('T')[0];
+            if (userStats.lastStudyDate !== today) {
+                userStats.streak++;
+                userStats.lastStudyDate = today;
+            }
+            saveUserProfile();
+
             const cardElem = document.getElementById('card-element');
             if (rating === 1) {
                 cardElem.classList.add('card-swipe-left');
@@ -862,8 +1063,14 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
                     currentCardIndex++;
                     renderCurrentCard();
                 } else {
-                    alert('🎉 Sesja powtórek ukończona!');
-                    switchTab('decks');
+                    userStats.sessions++;
+                    saveUserProfile();
+                    showCustomModal({
+                        title: 'Sesja ukończona!',
+                        subtitle: `Świetna robota! Przejrzano ${deck.cards.length} fiszek.`,
+                        icon: '🎉',
+                        onConfirm: () => { switchTab('decks'); }
+                    });
                 }
             }, 200);
         }
@@ -970,6 +1177,55 @@ ZASADY FORMATOWANIA (ANTI-SLOP):
             }, false);
         }
 
+        // CUSTOM MODAL ENGINE
+        let modalConfirmCallback = null;
+
+        function showCustomModal(options) {
+            const backdrop = document.getElementById('custom-modal-backdrop');
+            const titleEl = document.getElementById('modal-title');
+            const subtitleEl = document.getElementById('modal-subtitle');
+            const iconEl = document.getElementById('modal-icon-container');
+            const inputContainer = document.getElementById('modal-input-container');
+            const inputField = document.getElementById('modal-input-field');
+            const cancelBtn = document.getElementById('modal-btn-cancel');
+
+            titleEl.innerText = options.title || 'Informacja';
+            subtitleEl.innerText = options.subtitle || '';
+            iconEl.innerText = options.icon || '🐟';
+
+            if (options.showInput) {
+                inputContainer.classList.remove('hidden');
+                inputField.value = '';
+                inputField.placeholder = options.inputPlaceholder || '';
+                setTimeout(() => inputField.focus(), 100);
+            } else {
+                inputContainer.classList.add('hidden');
+            }
+
+            if (options.showCancel) {
+                cancelBtn.classList.remove('hidden');
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+
+            modalConfirmCallback = options.onConfirm || null;
+            backdrop.classList.remove('hidden');
+        }
+
+        function closeCustomModal() {
+            const backdrop = document.getElementById('custom-modal-backdrop');
+            const inputField = document.getElementById('modal-input-field');
+            const inputValue = inputField.value;
+
+            backdrop.classList.add('hidden');
+
+            if (modalConfirmCallback) {
+                modalConfirmCallback(inputValue);
+                modalConfirmCallback = null;
+            }
+        }
+
+        // PWA BANNER CHECK
         function checkPwaBanner() {
             const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
             const isDismissed = localStorage.getItem('pwa_banner_dismissed');
