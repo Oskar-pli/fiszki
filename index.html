@@ -9,7 +9,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fiszki">
     <meta name="theme-color" content="#131f24">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZpc3praSIsCiAgInNob3J0X25hbWUiOiAiRmlzemtpIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxMzFmMjQiLAogICJ0aGVtZV9jb2xvciI6ICIjMTMxZjI0Igp9">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -142,7 +144,7 @@
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto pb-24 md:pb-6 relative w-full max-w-2xl mx-auto">
+    <main class="flex-1 overflow-y-auto pb-28 md:pb-6 relative w-full max-w-2xl mx-auto">
         <!-- HOME (DECKS) -->
         <section id="view-home" class="p-4 space-y-6">
             <div class="flex items-center justify-between mb-2">
@@ -202,7 +204,7 @@
             </div>
         </section>
 
-        <!-- PROFILE (REDESIGNED INTUITIVE STATS) -->
+        <!-- PROFILE (INTUITIVE STATS) -->
         <section id="view-profile" class="hidden p-4 space-y-6">
             <div class="flex items-center justify-between pb-6 border-b-2 border-duo-border">
                 <div class="flex items-center gap-4">
@@ -217,11 +219,9 @@
                 </div>
             </div>
 
-            <!-- Intuitive Stats Grid -->
             <div>
                 <h3 class="text-lg font-extrabold text-white mb-3">Twoje osiągnięcia</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <!-- XP -->
                     <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-bolt text-3xl text-duo-blue w-8 text-center"></i>
                         <div>
@@ -229,7 +229,6 @@
                             <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Punkty XP</div>
                         </div>
                     </div>
-                    <!-- Streak -->
                     <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-fire text-3xl text-duo-yellow w-8 text-center"></i>
                         <div>
@@ -237,7 +236,6 @@
                             <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Dni z rzędu</div>
                         </div>
                     </div>
-                    <!-- Total Mastery -->
                     <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-brain text-3xl text-duo-green w-8 text-center"></i>
                         <div>
@@ -245,7 +243,6 @@
                             <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Opanowany materiał</div>
                         </div>
                     </div>
-                    <!-- Sessions -->
                     <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-trophy text-3xl text-duo-yellow w-8 text-center" style="color: #e5b400"></i>
                         <div>
@@ -256,7 +253,6 @@
                 </div>
             </div>
 
-            <!-- Redesigned Weak Points -->
             <div class="pt-2">
                 <h3 class="text-lg font-extrabold text-white mb-3">Słabe punkty</h3>
                 <div id="problematic-words-list" class="space-y-3"></div>
@@ -272,6 +268,20 @@
             </div>
         </section>
     </main>
+
+    <!-- MOBILE PWA BANNER -->
+    <div id="pwa-install-banner" class="hidden fixed bottom-[76px] left-4 right-4 bg-duo-surface border-2 border-duo-blue rounded-2xl p-4 shadow-2xl z-30 animate-slide-up md:max-w-md md:left-auto md:right-4 md:bottom-6">
+        <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center justify-center w-10 h-10 bg-duo-bg border-2 border-duo-border rounded-xl shrink-0">
+                <i class="fa-solid fa-download text-duo-blue text-lg"></i>
+            </div>
+            <div class="flex-1 pt-0.5">
+                <h4 class="text-white font-extrabold text-sm mb-1">Zainstaluj aplikację</h4>
+                <p id="pwa-instructions" class="text-[11px] text-duo-muted font-bold leading-tight">Zainstaluj na ekranie głównym.</p>
+            </div>
+            <button onclick="dismissPwaBanner()" class="text-duo-muted hover:text-white p-1 -mt-1 -mr-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+    </div>
 
     <!-- MOBILE NAV -->
     <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-duo-bg border-t-2 border-duo-border z-40 pb-safe">
@@ -391,7 +401,11 @@
         let selectedDeckForStudy = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadData(); updateHeaderUI(); renderDecks(); switchTab('home');
+            loadData(); 
+            updateHeaderUI(); 
+            renderDecks(); 
+            switchTab('home');
+            checkPwaBanner(); // Initialize PWA Install check
         });
 
         function loadData() {
@@ -451,7 +465,6 @@
                 
                 const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
                 
-                // Clear actionable UI badges instead of cryptic icons
                 let statBadges = '';
                 if(toReview > 0) statBadges += `<span class="bg-duo-bg border border-duo-red text-duo-red px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-fire mr-1"></i> Do powtórki: ${toReview}</span>`;
                 if(unseen > 0) statBadges += `<span class="bg-duo-bg border border-duo-border text-duo-muted px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-inbox mr-1"></i> Nowe: ${unseen}</span>`;
@@ -583,7 +596,6 @@
         function renderProfile() {
             document.getElementById('profile-name-display').innerText = escape(stats.name || 'Uczeń');
             
-            // Calculate Global Mastery
             let totalCards = 0;
             let masteredCards = 0;
             const probs = [];
@@ -728,6 +740,31 @@
         function closeLessonComplete() {
             document.getElementById('lesson-complete-overlay').classList.add('hidden'); document.getElementById('global-header').classList.remove('hidden');
             document.getElementById('bottom-nav').classList.remove('hidden'); renderDecks();
+        }
+
+        // --- PWA LOGIC ---
+        function checkPwaBanner() {
+            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+            const isDismissed = localStorage.getItem('duo_fiszki_pwa_dismissed');
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (!isStandalone && !isDismissed && isMobile) {
+                const banner = document.getElementById('pwa-install-banner');
+                const instructions = document.getElementById('pwa-instructions');
+                const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+                if (isiOS) {
+                    instructions.innerHTML = `Kliknij ikonę udostępniania <i class="fa-solid fa-arrow-up-from-bracket text-duo-blue mx-1"></i> na dole ekranu, a następnie <strong>"Do ekranu początkowego"</strong>.`;
+                } else {
+                    instructions.innerHTML = `Kliknij menu przeglądarki <i class="fa-solid fa-ellipsis-vertical text-duo-blue mx-1"></i> i wybierz <strong>"Dodaj do ekranu głównego"</strong>.`;
+                }
+                banner.classList.remove('hidden');
+            }
+        }
+
+        function dismissPwaBanner() {
+            document.getElementById('pwa-install-banner').classList.add('hidden');
+            localStorage.setItem('duo_fiszki_pwa_dismissed', 'true');
         }
 
         // --- SHARED MODAL LOGIC ---
