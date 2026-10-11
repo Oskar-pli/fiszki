@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fiszki — Ucz się skutecznie</title>
     
-    <!-- PWA Meta -->
+    <!-- PWA Meta (Wsparcie dla jasnego i ciemnego motywu) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Fiszki">
-    <meta name="theme-color" content="#131f24">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131f24">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,9 +29,14 @@
                 extend: {
                     colors: {
                         duo: {
-                            bg: '#131f24',
-                            surface: '#202f36',
-                            border: '#37464f',
+                            /* Zmienne CSS odpowiadające systemowemu motywowi (Jasny/Ciemny) */
+                            bg: 'var(--duo-bg)',
+                            surface: 'var(--duo-surface)',
+                            border: 'var(--duo-border)',
+                            text: 'var(--duo-text)',
+                            muted: 'var(--duo-muted)',
+                            
+                            /* Sztywne żywe kolory aplikacji */
                             green: '#58cc02', greenDark: '#58a700',
                             red: '#ff4b4b', redDark: '#ea2b2b',
                             blue: '#1cb0f6', blueDark: '#1899d6',
@@ -38,8 +44,6 @@
                             purple: '#ce82ff', purpleDark: '#a567cc',
                             orange: '#ff9600', orangeDark: '#cc7800',
                             pink: '#ff80bf', pinkDark: '#cc6498',
-                            text: '#ffffff',
-                            muted: '#afafaf',
                         }
                     },
                     fontFamily: { sans: ['Nunito', 'sans-serif'] },
@@ -68,13 +72,32 @@
     </script>
     
     <style>
+        /* CSS Variables: Automatyczne wykrywanie Motywu (Light/Dark) */
+        :root {
+            --duo-bg: #ffffff;
+            --duo-surface: #ffffff;
+            --duo-border: #e5e5e5;
+            --duo-text: #4b4b4b;
+            --duo-muted: #afafaf;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --duo-bg: #131f24;
+                --duo-surface: #202f36;
+                --duo-border: #37464f;
+                --duo-text: #ffffff;
+                --duo-muted: #77858f;
+            }
+        }
+
         * { -webkit-tap-highlight-color: transparent; outline: none; }
-        body { background-color: #131f24; color: #ffffff; overscroll-behavior-y: none; touch-action: pan-y; }
+        body { background-color: var(--duo-bg); color: var(--duo-text); overscroll-behavior-y: none; touch-action: pan-y; transition: background-color 0.3s, color 0.3s; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* 3D Buttons Standard */
+        /* 3D Buttons */
         .btn-3d {
             border-radius: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
             border-bottom-width: 4px; transition: transform 0.1s, border-bottom-width 0.1s, background-color 0.2s;
@@ -96,20 +119,22 @@
         .btn-primary:hover { background-color: #1490cc; }
         .btn-danger { background-color: #ff4b4b; border-color: #ea2b2b; color: white; }
         .btn-warning { background-color: #ffc800; border-color: #e5b400; color: white; }
-        .btn-surface { background-color: #202f36; border-color: #37464f; color: #1cb0f6; border: 2px solid #37464f; border-bottom-width: 4px; }
+        .btn-surface { background-color: var(--duo-surface); border-color: var(--duo-border); color: var(--duo-text); border: 2px solid var(--duo-border); border-bottom-width: 4px; }
         
+        /* Wejścia Tekstowe (Inputs) dostosowane do motywu */
         .duo-input {
-            background-color: #202f36; border: 2px solid #37464f; border-radius: 16px;
-            color: white; padding: 12px 16px; font-weight: 600; transition: border-color 0.2s; width: 100%;
+            background-color: var(--duo-surface); border: 2px solid var(--duo-border); border-radius: 16px;
+            color: var(--duo-text); padding: 12px 16px; font-weight: 600; transition: border-color 0.2s, background-color 0.3s; width: 100%;
         }
         .duo-input:focus { border-color: #1cb0f6; }
+        .duo-input::placeholder { color: var(--duo-muted); }
 
         /* Progress Bar */
-        .progress-bar-bg { background-color: #37464f; border-radius: 999px; overflow: hidden; height: 16px; width: 100%; position: relative; }
+        .progress-bar-bg { background-color: var(--duo-border); border-radius: 999px; overflow: hidden; height: 16px; width: 100%; position: relative; }
         .progress-bar-fill { background-color: #1cb0f6; height: 100%; border-radius: 999px; transition: width 0.3s ease; position: relative; }
         .progress-bar-fill::after { content: ''; position: absolute; top: 4px; left: 8px; right: 8px; height: 4px; background-color: rgba(255,255,255,0.25); border-radius: 4px; }
 
-        /* 3D Card Flip */
+        /* 3D Card Flip (Odwracanie fiszki) */
         .flip-container { perspective: 1000px; width: 100%; height: 280px; }
         .flipper { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
         .flipped .flipper { transform: rotateY(180deg); }
@@ -117,21 +142,22 @@
             backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0);
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; 
-            background-color: #202f36; border: 2px solid #37464f; border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            background-color: var(--duo-surface); border: 2px solid var(--duo-border); border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+            transition: background-color 0.3s, border-color 0.3s;
         }
-        .back-face { transform: rotateY(180deg) translateZ(0); border-color: #1cb0f6; background-color: #18242a; }
+        .back-face { transform: rotateY(180deg) translateZ(0); border-color: #1cb0f6; }
     </style>
 </head>
 <body class="h-screen flex flex-col antialiased">
 
     <!-- GLOBAL HEADER -->
     <header id="global-header" class="flex items-center justify-between px-4 py-3 bg-duo-bg border-b-2 border-duo-border z-50 sticky top-0 relative">
-        <div class="flex items-center gap-3 cursor-pointer p-1.5 -ml-1.5 rounded-xl hover:bg-white/5 transition" onclick="toggleDrawer()">
+        <div class="flex items-center gap-3 cursor-pointer p-1.5 -ml-1.5 rounded-xl hover:opacity-70 transition" onclick="toggleDrawer()">
             <div class="w-10 h-10 rounded-xl bg-duo-surface border-2 border-duo-border flex items-center justify-center text-2xl shadow-sm">
                 <span id="header-cat-icon">📚</span>
             </div>
             <div>
-                <h1 class="text-sm font-extrabold text-white tracking-wide leading-tight max-w-[120px] truncate" id="topbar-cat-name">Kategoria</h1>
+                <h1 class="text-sm font-extrabold text-duo-text tracking-wide leading-tight max-w-[120px] truncate" id="topbar-cat-name">Kategoria</h1>
                 <p class="text-[10px] text-duo-blue font-bold -mt-0.5 uppercase tracking-wider flex items-center gap-1">Zmień <i id="drawer-arrow" class="fa-solid fa-angle-down transition-transform"></i></p>
             </div>
         </div>
@@ -151,7 +177,7 @@
     <div id="category-drawer" class="fixed top-[68px] left-0 right-0 bg-duo-surface border-b-2 border-duo-border z-40 transform -translate-y-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col rounded-b-3xl">
         <div class="p-5">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-white font-extrabold text-xs uppercase tracking-wider text-duo-muted">Kategorie</h3>
+                <h3 class="text-duo-muted font-extrabold text-xs uppercase tracking-wider">Kategorie</h3>
                 <button onclick="openNewCategoryModal()" class="text-duo-blue font-extrabold text-xs uppercase bg-duo-blue/10 px-3 py-2 rounded-xl transition hover:bg-duo-blue/20"><i class="fa-solid fa-plus mr-1"></i> Dodaj Nową</button>
             </div>
             <nav id="drawer-horizontal-bar" class="flex flex-nowrap overflow-x-auto gap-4 pb-2 no-scrollbar items-stretch w-full"></nav>
@@ -167,9 +193,9 @@
 
         <!-- ADD/IMPORT -->
         <section id="view-add" class="hidden p-4 space-y-6">
-            <h2 class="text-2xl font-extrabold text-white text-center mb-2 mt-4">Zarządzaj Talią</h2>
+            <h2 class="text-2xl font-extrabold text-duo-text text-center mb-2 mt-4">Zarządzaj Talią</h2>
             
-            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4 shadow-sm">
                 <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-bolt text-duo-yellow mr-1"></i> Szybka fiszka</h3>
                 <select id="quick-add-deck" class="duo-input appearance-none mb-2"></select>
                 <div class="space-y-3 pt-2">
@@ -180,7 +206,7 @@
             </div>
 
             <!-- AI GENERATOR -->
-            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4 shadow-sm">
                 <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-wand-magic-sparkles text-duo-purple mr-1"></i> Generuj z AI</h3>
                 <input type="text" id="ai-topic" placeholder="Wpisz temat (np. Biologia, Czasowniki)" class="duo-input text-sm">
                 
@@ -192,12 +218,12 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-3">
-                    <button onclick="generateAndCopyPrompt('text')" class="btn-3d btn-surface py-3 text-[11px]"><i class="fa-solid fa-keyboard"></i> Z tekstu</button>
+                    <button onclick="generateAndCopyPrompt('text')" class="btn-3d btn-surface py-3 text-[11px]"><i class="fa-solid fa-keyboard text-duo-muted"></i> Z tekstu</button>
                     <button onclick="generateAndCopyPrompt('vision')" class="btn-3d btn-surface border-duo-purple text-duo-purple py-3 text-[11px]"><i class="fa-solid fa-camera"></i> Ze Zdjęcia</button>
                 </div>
             </div>
             
-            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4 shadow-sm">
                 <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-file-import text-duo-blue mr-1"></i> Wklej fiszki (Format: Przód | Tył)</h3>
                 <textarea id="import-text" rows="4" placeholder="Apple | Jabłko&#10;Car | Samochód" class="duo-input text-sm font-mono"></textarea>
                 <button onclick="importCards()" class="btn-3d btn-primary w-full py-3.5 text-[15px]">Zaimportuj do wybranej talii</button>
@@ -208,36 +234,42 @@
         <section id="view-profile" class="hidden p-4 space-y-6">
             <div class="flex items-center justify-between pb-6 border-b-2 border-duo-border mt-4">
                 <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center text-3xl shadow-sm">
-                        <i class="fa-solid fa-user text-duo-blue"></i>
+                    <!-- AWATAR -->
+                    <div class="relative w-16 h-16 rounded-full border-4 border-duo-border flex items-center justify-center text-3xl shadow-sm bg-duo-surface overflow-hidden cursor-pointer group" onclick="document.getElementById('avatar-upload').click()">
+                        <img id="profile-avatar-img" src="" class="w-full h-full object-cover hidden" alt="Awatar">
+                        <i id="profile-avatar-icon" class="fa-solid fa-user text-duo-blue"></i>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fa-solid fa-camera text-white text-sm"></i>
+                        </div>
+                        <input type="file" id="avatar-upload" class="hidden" accept="image/*" onchange="handleAvatarUpload(event)">
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h2 class="text-2xl font-extrabold text-white" id="profile-name-display">Uczeń</h2>
-                            <button onclick="editProfileName()" class="text-duo-muted hover:text-white transition"><i class="fa-solid fa-pen text-sm"></i></button>
+                            <h2 class="text-2xl font-extrabold text-duo-text" id="profile-name-display">Uczeń</h2>
+                            <button onclick="editProfileName()" class="text-duo-muted hover:text-duo-blue transition"><i class="fa-solid fa-pen text-sm"></i></button>
                         </div>
                         <p class="text-duo-blue font-bold text-sm">Twój profil</p>
                     </div>
                 </div>
             </div>
             <div>
-                <h3 class="text-lg font-extrabold text-white mb-3">Statystyki</h3>
+                <h3 class="text-lg font-extrabold text-duo-text mb-3">Statystyki</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-gem text-3xl text-duo-blue w-8 text-center"></i>
-                        <div><div class="text-2xl font-extrabold text-white" id="stat-xp">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Punkty XP</div></div>
+                        <div><div class="text-2xl font-extrabold text-duo-text" id="stat-xp">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Punkty XP</div></div>
                     </div>
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-fire text-3xl text-duo-yellow w-8 text-center"></i>
-                        <div><div class="text-2xl font-extrabold text-white" id="stat-streak">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Dni z rzędu</div></div>
+                        <div><div class="text-2xl font-extrabold text-duo-text" id="stat-streak">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Dni z rzędu</div></div>
                     </div>
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-crown text-3xl text-duo-yellow w-8 text-center"></i>
-                        <div><div class="text-2xl font-extrabold text-white" id="stat-mastery">0%</div><div class="text-[10px] font-bold text-duo-muted uppercase">Opanowane</div></div>
+                        <div><div class="text-2xl font-extrabold text-duo-text" id="stat-mastery">0%</div><div class="text-[10px] font-bold text-duo-muted uppercase">Opanowane</div></div>
                     </div>
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                         <i class="fa-solid fa-book-open text-3xl text-duo-blue w-8 text-center"></i>
-                        <div><div class="text-2xl font-extrabold text-white" id="stat-sessions">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Lekcje</div></div>
+                        <div><div class="text-2xl font-extrabold text-duo-text" id="stat-sessions">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Lekcje</div></div>
                     </div>
                 </div>
             </div>
@@ -245,24 +277,24 @@
     </main>
 
     <!-- BOTTOM NAV -->
-    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-duo-bg border-t-2 border-duo-border z-30 pb-8 pt-2 px-2">
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-duo-bg border-t-2 border-duo-border z-30 pb-8 pt-2 px-2 transition-colors duration-300">
         <div class="max-w-md mx-auto flex justify-between items-center px-8">
             <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center p-3 text-duo-blue transition"><i class="fa-solid fa-house text-3xl"></i></button>
-            <button onclick="switchTab('add')" id="nav-btn-add" class="flex flex-col items-center p-3 text-duo-muted hover:text-white transition"><i class="fa-solid fa-dumbbell text-3xl"></i></button>
-            <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center p-3 text-duo-muted hover:text-white transition"><i class="fa-solid fa-user text-3xl"></i></button>
+            <button onclick="switchTab('add')" id="nav-btn-add" class="flex flex-col items-center p-3 text-duo-muted hover:text-duo-blue transition"><i class="fa-solid fa-dumbbell text-3xl"></i></button>
+            <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center p-3 text-duo-muted hover:text-duo-blue transition"><i class="fa-solid fa-user text-3xl"></i></button>
         </div>
     </nav>
 
     <!-- STUDY OVERLAY -->
-    <div id="study-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col">
+    <div id="study-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col transition-colors duration-300">
         <div class="flex items-center px-4 py-5 gap-4">
-            <button onclick="quitStudy()" class="text-duo-muted hover:text-white text-2xl font-bold p-2"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="quitStudy()" class="text-duo-muted hover:text-duo-text text-2xl font-bold p-2"><i class="fa-solid fa-xmark"></i></button>
             <div class="progress-bar-bg"><div id="study-progress" class="progress-bar-fill" style="width: 0%"></div></div>
         </div>
         <div class="flex-1 flex flex-col justify-center items-center p-6 text-center">
             <div class="flip-container cursor-pointer" id="study-card" onclick="revealAnswer()">
                 <div class="flipper">
-                    <div class="front-face"><h2 id="study-front" class="text-4xl font-extrabold text-white leading-tight break-words w-full"></h2></div>
+                    <div class="front-face"><h2 id="study-front" class="text-4xl font-extrabold text-duo-text leading-tight break-words w-full"></h2></div>
                     <div class="back-face">
                         <h3 class="text-duo-blue font-bold uppercase tracking-wider mb-4 text-sm">Odpowiedź</h3>
                         <h2 id="study-back" class="text-3xl font-extrabold text-duo-blue leading-tight break-words w-full"></h2>
@@ -270,12 +302,12 @@
                 </div>
             </div>
         </div>
-        <div id="study-action-bar" class="p-4 pb-8 border-t-2 border-duo-border bg-duo-bg">
+        <div id="study-action-bar" class="p-4 pb-8 border-t-2 border-duo-border bg-duo-bg transition-colors duration-300">
             <button onclick="revealAnswer()" class="btn-3d btn-primary w-full py-4 text-[16px]">SPRAWDŹ</button>
         </div>
         <div id="study-rating-drawer" class="hidden absolute bottom-0 left-0 right-0 bg-duo-surface border-t-2 border-duo-border rounded-t-3xl shadow-2xl flex flex-col z-50 pb-8 pt-4">
             <div class="px-6">
-                <h4 class="text-white font-extrabold text-lg mb-4 text-center">Jak poszło?</h4>
+                <h4 class="text-duo-text font-extrabold text-lg mb-4 text-center">Jak poszło?</h4>
                 <div class="grid grid-cols-3 gap-3">
                     <button onclick="rateCard(1)" class="btn-3d btn-danger py-4 flex flex-col items-center"><span class="text-xs">TRUDNE</span></button>
                     <button onclick="rateCard(2)" class="btn-3d btn-warning py-4 flex flex-col items-center"><span class="text-xs">ŚREDNIE</span></button>
@@ -285,11 +317,35 @@
         </div>
     </div>
 
-    <!-- DECK OPTIONS MODAL (ZMIANA NAZWY / USUWANIE) -->
+    <!-- CATEGORY OPTIONS MODAL -->
+    <div id="category-options-modal" class="hidden fixed inset-0 bg-black/70 z-[85] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
+            <button onclick="closeCategoryOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-duo-text text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-duo-text mb-2 mt-2">Opcje Kategorii</h3>
+            
+            <div class="space-y-4 mb-6 mt-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1 text-center">Emotka</label>
+                    <input type="text" id="cat-edit-emoji" class="duo-input text-3xl text-center py-3" maxlength="2">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1">Nazwa Kategorii</label>
+                    <input type="text" id="cat-edit-name" class="duo-input font-bold">
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <button onclick="saveCategoryOptions()" class="btn-3d btn-primary w-full py-4 text-sm">ZAPISZ ZMIANY</button>
+                <button onclick="confirmDeleteCategoryBtn()" class="btn-3d btn-danger w-full py-4 text-sm"><i class="fa-solid fa-trash mr-1"></i> USUŃ KATEGORIĘ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DECK OPTIONS MODAL -->
     <div id="deck-options-modal" class="hidden fixed inset-0 bg-black/70 z-[85] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
-            <button onclick="closeDeckOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Opcje Talii</h3>
+            <button onclick="closeDeckOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-duo-text text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-duo-text mb-2 mt-2">Opcje Talii</h3>
             <p class="text-duo-muted font-bold text-sm mb-5">Zmień nazwę lub usuń tę talię ze ścieżki.</p>
             
             <div class="space-y-4 mb-6">
@@ -309,10 +365,10 @@
     <!-- CREATE DECK MODAL -->
     <div id="create-deck-modal" class="hidden fixed inset-0 bg-black/70 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
-            <button onclick="closeNewDeckModal()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Nowa Talia</h3>
+            <button onclick="closeNewDeckModal()" class="absolute top-4 right-5 text-duo-muted hover:text-duo-text text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-duo-text mb-2 mt-2">Nowa Talia</h3>
             <p class="text-duo-muted font-bold text-sm mb-5">Dodaj nową talię do tej kategorii na ścieżkę.</p>
-            <div class="space-y-4 mb-6"><input type="text" id="modal-new-deck-name" class="duo-input text-white font-bold" placeholder="np. Lekcja 2"></div>
+            <div class="space-y-4 mb-6"><input type="text" id="modal-new-deck-name" class="duo-input font-bold" placeholder="np. Lekcja 2"></div>
             <button onclick="submitNewDeck()" class="btn-3d btn-primary w-full py-4 text-sm">DODAJ</button>
         </div>
     </div>
@@ -320,8 +376,8 @@
     <!-- CREATE CATEGORY MODAL -->
     <div id="create-category-modal" class="hidden fixed inset-0 bg-black/70 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
-            <button onclick="closeNewCategoryModal()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Nowa Kategoria</h3>
+            <button onclick="closeNewCategoryModal()" class="absolute top-4 right-5 text-duo-muted hover:text-duo-text text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-duo-text mb-2 mt-2">Nowa Kategoria</h3>
             <p class="text-duo-muted font-bold text-sm mb-4">Wybierz z listy poniżej lub wpisz własną emotkę.</p>
             
             <div class="space-y-4 mb-6">
@@ -336,12 +392,12 @@
                         <button onclick="setEmoji('🎨')" class="text-2xl hover:scale-110 transition active:scale-95">🎨</button>
                         <button onclick="setEmoji('📚')" class="text-2xl hover:scale-110 transition active:scale-95">📚</button>
                     </div>
-                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1 text-center">Twoja Emotka (Wpisz dowolną)</label>
+                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1 text-center">Twoja Emotka</label>
                     <input type="text" id="modal-new-cat-emoji" class="duo-input text-3xl text-center py-4" value="📚">
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1">Nazwa Kategorii</label>
-                    <input type="text" id="modal-new-cat-name" class="duo-input text-white font-bold" placeholder="np. Język Hiszpański">
+                    <input type="text" id="modal-new-cat-name" class="duo-input font-bold" placeholder="np. Język Hiszpański">
                 </div>
             </div>
             <button onclick="submitNewCategory()" class="btn-3d btn-primary w-full py-4 text-sm">UTWÓRZ KATEGORIĘ</button>
@@ -351,14 +407,14 @@
     <!-- STUDY OPTIONS MODAL -->
     <div id="study-options-modal" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
-            <button onclick="closeStudyOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Wybierz tryb</h3>
+            <button onclick="closeStudyOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-duo-text text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-duo-text mb-2 mt-2">Wybierz tryb</h3>
             <p class="text-duo-muted font-bold text-sm mb-6">Ta talia ma słówka, które wymagają powtórki.</p>
             <div class="space-y-3">
                 <button onclick="startStudyMode('all')" class="btn-3d btn-surface w-full py-4 flex flex-col">
                     <span class="text-sm">ZWYKŁA LEKCJA</span><span class="text-[10px] font-bold text-duo-muted" id="opt-all-count">0</span>
                 </button>
-                <button onclick="startStudyMode('review')" class="btn-3d btn-danger w-full py-4 flex flex-col">
+                <button onclick="startStudyMode('review')" class="btn-3d btn-danger w-full py-4 flex flex-col text-white">
                     <span class="text-sm">TRENUJ BŁĘDY</span><span class="text-[10px] font-bold text-white/70" id="opt-review-count">0 fiszek</span>
                 </button>
             </div>
@@ -366,7 +422,7 @@
     </div>
 
     <!-- LESSON COMPLETE -->
-    <div id="lesson-complete-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col justify-between items-center text-center pb-12 pt-24 px-6">
+    <div id="lesson-complete-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col justify-between items-center text-center pb-12 pt-24 px-6 transition-colors duration-300">
         <div class="space-y-6 flex flex-col items-center animate-bounce-in w-full">
             <div class="w-32 h-32 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center mb-2 shadow-xl">
                 <i class="fa-solid fa-check text-6xl text-duo-blue"></i>
@@ -375,11 +431,11 @@
             <div class="grid grid-cols-2 gap-4 mt-8 w-full max-w-sm">
                 <div class="bg-duo-surface border-2 border-duo-blue rounded-xl p-4 flex flex-col items-center">
                     <span class="block text-duo-blue font-extrabold text-xl mb-1 uppercase tracking-wide">XP</span>
-                    <span class="text-white font-extrabold text-2xl" id="complete-xp">+0</span>
+                    <span class="text-duo-text font-extrabold text-2xl" id="complete-xp">+0</span>
                 </div>
                 <div class="bg-duo-surface border-2 border-duo-yellow rounded-xl p-4 flex flex-col items-center">
                     <span class="block text-duo-yellow font-extrabold text-xl mb-1 uppercase tracking-wide">Skuteczność</span>
-                    <span class="text-white font-extrabold text-2xl" id="complete-acc">100%</span>
+                    <span class="text-duo-text font-extrabold text-2xl" id="complete-acc">100%</span>
                 </div>
             </div>
         </div>
@@ -391,7 +447,7 @@
     <!-- REUSABLE MODAL (DLA BŁĘDÓW/ALERTÓW) -->
     <div id="custom-modal" class="hidden fixed inset-0 bg-black/70 z-[90] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in">
-            <h3 id="modal-title" class="text-xl font-extrabold text-white mb-2">Tytuł</h3>
+            <h3 id="modal-title" class="text-xl font-extrabold text-duo-text mb-2">Tytuł</h3>
             <p id="modal-desc" class="text-duo-muted font-bold text-sm mb-5 leading-relaxed">Opis</p>
             <div id="modal-input-wrapper" class="hidden mb-5"><input type="text" id="modal-input" class="duo-input" placeholder="..."></div>
             <div class="flex gap-3">
@@ -405,23 +461,29 @@
         // Główny state aplikacji
         let decks = [];
         let categoryEmojis = {};
-        let stats = { name: 'Uczeń', streak: 0, xp: 0, sessions: 0, lastDate: '' };
+        let stats = { name: 'Uczeń', streak: 0, xp: 0, sessions: 0, lastDate: '', avatar: null }; // avatar support
         let studyState = { deckId: null, cards: [], currentIndex: 0, sessionXP: 0, sessionCorrect: 0, sessionTotal: 0 };
         
         let isCardCheckable = false;
         let selectedDeckForStudy = null;
         let currentCategory = null;
         let drawerOpen = false;
-        let activeDeckForOptions = null; // ID talii do edycji
+        
+        let activeDeckForOptions = null;
+        let activeCategoryForOptions = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
             loadData(); 
             updateHeaderUI(); 
             switchTab('home');
             window.addEventListener('resize', () => requestAnimationFrame(drawPath));
+            
+            // Odświeżanie mapy po zmianie systemowego motywu
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                requestAnimationFrame(drawPath);
+            });
         });
 
-        // W pełni bezpieczna funkcja zabezpieczająca przed złośliwym kodem (XSS)
         function escape(str) { 
             return String(str||'')
                 .replace(/&/g, "&amp;")
@@ -431,20 +493,13 @@
                 .replace(/'/g, "&#039;"); 
         }
 
-        // Unikalne, bezpieczne ID
         function generateId(prefix) {
             return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
         }
 
         function getEmojiForCat(catName) {
             if (categoryEmojis[catName]) return categoryEmojis[catName];
-            const map = {
-                'Angielski': '🇬🇧', 'Hiszpański': '🇪🇸', 'Niemiecki': '🇩🇪', 
-                'Francuski': '🇫🇷', 'Polski': '🇵🇱', 'Włoski': '🇮🇹',
-                'Biologia': '🧬', 'Chemia': '🧪', 'Fizyka': '⚛️', 
-                'Matematyka': '📐', 'Prawo': '⚖️', 'Historia': '🏛️'
-            };
-            return map[catName] || '📚';
+            return '📚';
         }
 
         function setEmoji(emoji) {
@@ -453,25 +508,27 @@
 
         function loadData() {
             try {
-                // Migracja z v14 do bezpiecznego v15 bez utraty danych
-                decks = JSON.parse(localStorage.getItem('duo_fiszki_decks_v15')) || JSON.parse(localStorage.getItem('duo_fiszki_decks_v14')) || [];
-                categoryEmojis = JSON.parse(localStorage.getItem('duo_fiszki_emojis_v15')) || JSON.parse(localStorage.getItem('duo_fiszki_emojis_v14')) || {};
-                let savedStats = JSON.parse(localStorage.getItem('duo_fiszki_stats_v15')) || JSON.parse(localStorage.getItem('duo_fiszki_stats_v14'));
+                decks = JSON.parse(localStorage.getItem('duo_fiszki_decks_v17')) || JSON.parse(localStorage.getItem('duo_fiszki_decks_v16')) || [];
+                categoryEmojis = JSON.parse(localStorage.getItem('duo_fiszki_emojis_v17')) || JSON.parse(localStorage.getItem('duo_fiszki_emojis_v16')) || {};
+                let savedStats = JSON.parse(localStorage.getItem('duo_fiszki_stats_v17')) || JSON.parse(localStorage.getItem('duo_fiszki_stats_v16'));
                 if(savedStats) stats = { ...stats, ...savedStats };
-                currentCategory = localStorage.getItem('duo_fiszki_cat_v15') || localStorage.getItem('duo_fiszki_cat_v14');
+                currentCategory = localStorage.getItem('duo_fiszki_cat_v17') || localStorage.getItem('duo_fiszki_cat_v16');
             } catch(e) { console.error("Data load error", e); }
 
-            if (decks.length === 0) {
+            let allCats = Object.keys(categoryEmojis);
+            
+            if (allCats.length === 0) {
+                categoryEmojis['Angielski'] = '🇬🇧';
                 decks.push({ id: generateId('d'), title: 'Podstawy', category: 'Angielski', cards: [
                     { id: generateId('c'), front: 'To procrastinate', back: 'Odwlekać', status: 0 },
                     { id: generateId('c'), front: 'Resilience', back: 'Odporność / Wytrzymałość', status: 0 }
                 ]});
-                categoryEmojis['Angielski'] = '🇬🇧';
-                saveData();
+                allCats = Object.keys(categoryEmojis);
             }
 
-            const allCats = [...new Set(decks.map(d => d.category || 'Inne'))];
-            if(!currentCategory || !allCats.includes(currentCategory)) currentCategory = allCats[0] || 'Inne';
+            if(!currentCategory || !allCats.includes(currentCategory)) {
+                currentCategory = allCats[0];
+            }
             
             updateCategoryHeader();
             saveData(); 
@@ -484,10 +541,10 @@
         }
 
         function saveData() {
-            localStorage.setItem('duo_fiszki_decks_v15', JSON.stringify(decks));
-            localStorage.setItem('duo_fiszki_emojis_v15', JSON.stringify(categoryEmojis));
-            localStorage.setItem('duo_fiszki_stats_v15', JSON.stringify(stats));
-            if(currentCategory) localStorage.setItem('duo_fiszki_cat_v15', currentCategory);
+            localStorage.setItem('duo_fiszki_decks_v17', JSON.stringify(decks));
+            localStorage.setItem('duo_fiszki_emojis_v17', JSON.stringify(categoryEmojis));
+            localStorage.setItem('duo_fiszki_stats_v17', JSON.stringify(stats));
+            if(currentCategory) localStorage.setItem('duo_fiszki_cat_v17', currentCategory);
         }
 
         function checkStreak() {
@@ -502,6 +559,41 @@
         function updateHeaderUI() {
             document.getElementById('header-streak').innerText = stats.streak;
             document.getElementById('header-xp').innerText = stats.xp;
+        }
+
+        // --- ZDJĘCIE PROFILOWE W LOCIE ---
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            
+            // Kompresja obrazu i zapis (zabezpieczenie przed przepełnieniem LocalStorage)
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 256;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                    } else {
+                        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    stats.avatar = canvas.toDataURL('image/jpeg', 0.8);
+                    saveData();
+                    renderProfile();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         // --- DRAWER ---
@@ -532,18 +624,23 @@
 
         function renderDrawerBar() {
             const bar = document.getElementById('drawer-horizontal-bar');
-            const allCats = [...new Set(decks.map(d => d.category || 'Inne'))];
+            const allCats = Object.keys(categoryEmojis);
             
             bar.innerHTML = allCats.map(cat => {
                 const isActive = cat === currentCategory;
-                const bgClass = isActive ? 'bg-duo-blue' : 'bg-duo-surface';
-                const borderClass = isActive ? 'border-duo-blueDark' : 'border-duo-border';
-                const textColor = isActive ? 'text-white' : 'text-duo-muted';
-                const emojiBg = isActive ? 'bg-white/20' : 'bg-duo-bg';
+                
+                // Style dla aktywnej/nieaktywnej kategorii w obydwu motywach
+                const bgClass = isActive ? 'bg-duo-blue/20' : 'bg-duo-surface';
+                const borderClass = isActive ? 'border-duo-blue' : 'border-duo-border';
+                const textColor = isActive ? 'text-duo-blue' : 'text-duo-text';
+                const safeCat = encodeURIComponent(cat);
 
                 return `
-                <div class="flex-shrink-0 w-32 rounded-2xl border-2 border-b-4 ${bgClass}${borderClass} p-3 flex flex-col items-center justify-center cursor-pointer transition-transform active:scale-95" onclick="selectCategory('${escape(cat)}')">
-                    <div class="w-10 h-10 rounded-xl ${emojiBg} border-2 border-black/10 flex items-center justify-center text-2xl shadow-sm mb-2">
+                <div class="relative flex-shrink-0 w-32 rounded-2xl border-2 border-b-4 ${bgClass}${borderClass} p-3 flex flex-col items-center justify-center cursor-pointer transition-transform active:scale-95" onclick="selectCategory(decodeURIComponent('${safeCat}'))">
+                    <div class="absolute top-1.5 right-1.5 w-7 h-7 bg-black/10 dark:bg-black/20 rounded-xl flex items-center justify-center text-duo-muted hover:text-duo-text hover:bg-black/20 dark:hover:bg-black/40 transition z-20" onclick="event.stopPropagation(); openCategoryOptions(decodeURIComponent('${safeCat}'))">
+                        <i class="fa-solid fa-pen text-[11px]"></i>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-duo-bg border-2 border-duo-border flex items-center justify-center text-2xl shadow-sm mb-2 mt-1">
                         ${getEmojiForCat(cat)}
                     </div>
                     <span class="font-extrabold ${textColor} text-xs text-center w-full truncate">${escape(cat)}</span>
@@ -559,7 +656,78 @@
             renderPath();
         }
 
-        // --- NOWA KATEGORIA ---
+        // --- ZARZĄDZANIE KATEGORIAMI ---
+        function openCategoryOptions(cat) {
+            if(drawerOpen) toggleDrawer();
+            activeCategoryForOptions = cat;
+            document.getElementById('cat-edit-name').value = cat;
+            document.getElementById('cat-edit-emoji').value = getEmojiForCat(cat);
+            document.getElementById('category-options-modal').classList.remove('hidden');
+        }
+
+        function closeCategoryOptions() {
+            document.getElementById('category-options-modal').classList.add('hidden');
+            activeCategoryForOptions = null;
+        }
+
+        function saveCategoryOptions() {
+            const newName = document.getElementById('cat-edit-name').value.trim();
+            const newEmoji = document.getElementById('cat-edit-emoji').value.trim() || '📚';
+            
+            if(!newName) return showModal({title: 'Błąd', desc: 'Nazwa kategorii nie może być pusta.'});
+            
+            if (newName !== activeCategoryForOptions && categoryEmojis.hasOwnProperty(newName)) {
+                return showModal({title: 'Błąd', desc: 'Kategoria o takiej nazwie już istnieje.'});
+            }
+
+            decks.forEach(d => {
+                if(d.category === activeCategoryForOptions) {
+                    d.category = newName;
+                }
+            });
+
+            categoryEmojis[newName] = newEmoji;
+            if (newName !== activeCategoryForOptions) {
+                delete categoryEmojis[activeCategoryForOptions];
+            }
+
+            if (currentCategory === activeCategoryForOptions) {
+                currentCategory = newName;
+            }
+
+            saveData();
+            updateCategoryHeader();
+            renderPath();
+            closeCategoryOptions();
+        }
+
+        function confirmDeleteCategoryBtn() {
+            showModal({ 
+                title: 'Potwierdzenie', 
+                desc: `Na pewno usunąć kategorię "${escape(activeCategoryForOptions)}" i wszystkie jej talie? Tej akcji nie da się cofnąć.`, 
+                cancel: true, 
+                onOk: () => { 
+                    decks = decks.filter(d => d.category !== activeCategoryForOptions);
+                    delete categoryEmojis[activeCategoryForOptions];
+                    
+                    let allCats = Object.keys(categoryEmojis);
+                    
+                    if (allCats.length === 0) {
+                        currentCategory = 'Podstawy';
+                        decks.push({ id: generateId('d'), title: 'Lekcja 1', category: currentCategory, cards: [] });
+                        categoryEmojis[currentCategory] = '📚';
+                    } else if (currentCategory === activeCategoryForOptions) {
+                        currentCategory = allCats[0];
+                    }
+                    
+                    saveData();
+                    updateCategoryHeader();
+                    renderPath();
+                    closeCategoryOptions();
+                }
+            });
+        }
+
         function openNewCategoryModal() {
             if(drawerOpen) toggleDrawer();
             document.getElementById('modal-new-cat-name').value = '';
@@ -572,12 +740,13 @@
         function submitNewCategory() {
             const name = document.getElementById('modal-new-cat-name').value.trim();
             const emoji = document.getElementById('modal-new-cat-emoji').value.trim() || '📚';
+            
             if(!name) return showModal({ title: "Błąd", desc: "Podaj nazwę kategorii." });
+            if(categoryEmojis.hasOwnProperty(name)) return showModal({ title: "Błąd", desc: "Taka kategoria już istnieje." });
             
             currentCategory = name;
             categoryEmojis[name] = emoji;
             
-            // Tworzymy nową kategorię od razu z jedną domyślną talią o nazwie "Podstawy" (zamiast "Talia 1")
             decks.push({ id: generateId('d'), title: 'Podstawy', category: currentCategory, cards: [] });
             
             updateCategoryHeader();
@@ -609,15 +778,13 @@
             container.innerHTML = '';
             
             const catDecks = decks.filter(d => (d.category || 'Inne') === currentCategory);
-            
             const offsets = [0, -30, -45, -30, 0, 30, 45, 30];
             
-            // Poprawka: Nawet jeśli kategoria jest pusta, wyświetlamy przycisk tworzenia talii (brak "ślepego zaułka")
             if(catDecks.length === 0) {
                 container.innerHTML = `
                     <p class="text-duo-muted font-bold text-center mt-10 mb-6">Ta kategoria nie ma jeszcze talii.</p>
                     <div class="path-node-wrapper relative flex justify-center w-full">
-                        <button onclick="openNewDeckModal()" class="node-circle bg-white border-gray-300 hover:bg-gray-100 transition active:scale-95 text-duo-blue">
+                        <button onclick="openNewDeckModal()" class="node-circle bg-duo-surface text-duo-blue" style="border-color: var(--duo-border);">
                             <i class="fa-solid fa-plus text-4xl"></i>
                         </button>
                     </div>`;
@@ -656,15 +823,14 @@
                     pulseClass = 'animate-pulse-slow'; 
                 }
 
-                // Dodany przycisk edycji w dymku (ołówek)
                 const tooltipHtml = `
-                    <div class="absolute -top-[45px] bg-duo-surface border-2 border-duo-border rounded-xl px-4 py-1.5 shadow-lg whitespace-nowrap z-20 flex flex-col items-center cursor-pointer active:scale-95 transition hover:bg-duo-surface/80" onclick="openDeckOptions('${deck.id}')">
-                        <p class="text-white font-extrabold text-sm flex items-center gap-2 max-w-[200px] truncate">${escape(deck.title)} <i class="fa-solid fa-pen text-[10px] text-duo-muted"></i></p>
+                    <div class="absolute -top-[45px] bg-duo-surface border-2 border-duo-border rounded-xl px-4 py-1.5 shadow-lg whitespace-nowrap z-20 flex flex-col items-center cursor-pointer active:scale-95 transition hover:opacity-80" onclick="openDeckOptions('${deck.id}')">
+                        <p class="text-duo-text font-extrabold text-sm flex items-center gap-2 max-w-[200px] truncate">${escape(deck.title)} <i class="fa-solid fa-pen text-[10px] text-duo-muted"></i></p>
                         <div class="absolute -bottom-1.5 w-3 h-3 bg-duo-surface border-b-2 border-r-2 border-duo-border rotate-45"></div>
                     </div>`;
                 
                 let badge = '';
-                if(toReview > 0) badge = `<div class="absolute -top-1 -right-1 bg-white border-2 border-duo-bg w-7 h-7 rounded-full flex items-center justify-center text-duo-red font-black text-xs z-30 shadow-sm">${toReview}</div>`;
+                if(toReview > 0) badge = `<div class="absolute -top-1 -right-1 bg-white border-2 border-gray-200 w-7 h-7 rounded-full flex items-center justify-center text-duo-red font-black text-xs z-30 shadow-sm">${toReview}</div>`;
 
                 container.innerHTML += `
                     <div class="path-node-wrapper relative flex justify-center w-full mb-[50px] mt-2" style="transform: translateX(${offset}px)">
@@ -679,7 +845,7 @@
             const addOffset = offsets[catDecks.length % offsets.length];
             container.innerHTML += `
                 <div class="path-node-wrapper relative flex justify-center w-full mt-4 mb-20" style="transform: translateX(${addOffset}px)">
-                    <button onclick="openNewDeckModal()" class="node-circle bg-white border-gray-300 hover:bg-gray-100 transition active:scale-95 text-duo-blue">
+                    <button onclick="openNewDeckModal()" class="node-circle bg-duo-surface text-duo-blue hover:opacity-80 transition active:scale-95" style="border-color: var(--duo-border);">
                         <i class="fa-solid fa-plus text-4xl"></i>
                     </button>
                 </div>`;
@@ -695,6 +861,11 @@
             
             let pathString = ''; 
             const containerRect = container.getBoundingClientRect();
+            
+            // Pobieranie aktywnych kolorów motywu z CSS Variables
+            const computedStyle = getComputedStyle(document.body);
+            const strokeOuter = computedStyle.getPropertyValue('--duo-border').trim() || '#e5e5e5';
+            const strokeInner = computedStyle.getPropertyValue('--duo-surface').trim() || '#ffffff';
             
             for(let i = 0; i < nodes.length; i++) {
                 const rect = nodes[i].getBoundingClientRect();
@@ -713,12 +884,12 @@
             
             svg.style.height = `${container.scrollHeight}px`;
             svg.innerHTML = `
-                <path d="${pathString}" fill="none" stroke="#37464f" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="${pathString}" fill="none" stroke="#202f36" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="${pathString}" fill="none" stroke="${strokeOuter}" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" transition="stroke 0.3s" />
+                <path d="${pathString}" fill="none" stroke="${strokeInner}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" transition="stroke 0.3s" />
             `;
         }
 
-        // --- OPCJE, EDYCJA I TWORZENIE TALII ---
+        // --- OPCJE I TWORZENIE TALII ---
         function openNewDeckModal() { document.getElementById('modal-new-deck-name').value = ''; document.getElementById('create-deck-modal').classList.remove('hidden'); }
         function closeNewDeckModal() { document.getElementById('create-deck-modal').classList.add('hidden'); }
         function submitNewDeck() { 
@@ -728,7 +899,6 @@
             saveData(); renderPath(); closeNewDeckModal(); 
         }
 
-        // Nowe funkcje od Edycji Nazwy Talii i jej usuwania
         function openDeckOptions(id) {
             activeDeckForOptions = id;
             const deck = decks.find(d => d.id === id);
@@ -793,7 +963,6 @@
                 if(line.trim() === '') return; 
                 const parts = line.split('|'); 
                 if(parts.length >= 2) { 
-                    // Usuwanie automatycznej numeracji (np. "1. ", "- ") na początku
                     const cleanFront = parts[0].trim().replace(/^[\d\.\-\*]+\s*/, '');
                     deck.cards.push({ id: generateId('c'), front: cleanFront, back: parts[1].trim(), status: 0 }); 
                     added++; 
@@ -808,7 +977,6 @@
             } 
         }
         
-        // Funkcja kopiowania promtów z obsługą błędów (Gdy blokada schowka)
         function generateAndCopyPrompt(type) { 
             const lang = document.getElementById('ai-lang').value; 
             let prompt = ""; 
@@ -824,7 +992,7 @@
                 navigator.clipboard.writeText(prompt).then(() => {
                     showModal({ title: 'Skopiowano!', desc: 'Wklej teraz ten prompt do ChatGPT, a gotowy wynik wklej niżej w oknie importu aplikacji.' });
                 }).catch(err => {
-                    promptFallback(prompt); // Fallback jeśli przeglądarka zablokuje Clipboard API
+                    promptFallback(prompt);
                 });
             } catch(e) {
                 promptFallback(prompt);
@@ -837,7 +1005,31 @@
         }
 
         // --- PROFILE ---
-        function renderProfile() { document.getElementById('profile-name-display').innerText = escape(stats.name || 'Uczeń'); let totalCards = 0, masteredCards = 0; decks.forEach(d => { totalCards += d.cards.length; d.cards.forEach(c => { if (c.status === 3) masteredCards++; }); }); const pct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0; document.getElementById('stat-streak').innerText = stats.streak; document.getElementById('stat-xp').innerText = stats.xp; document.getElementById('stat-sessions').innerText = stats.sessions; document.getElementById('stat-mastery').innerText = `${pct}%`; }
+        function renderProfile() { 
+            document.getElementById('profile-name-display').innerText = escape(stats.name || 'Uczeń'); 
+            
+            // Obsługa wyświetlania Awatara
+            if(stats.avatar) {
+                const imgEl = document.getElementById('profile-avatar-img');
+                imgEl.src = stats.avatar;
+                imgEl.classList.remove('hidden');
+                document.getElementById('profile-avatar-icon').classList.add('hidden');
+            } else {
+                document.getElementById('profile-avatar-img').classList.add('hidden');
+                document.getElementById('profile-avatar-icon').classList.remove('hidden');
+            }
+
+            let totalCards = 0, masteredCards = 0; 
+            decks.forEach(d => { 
+                totalCards += d.cards.length; 
+                d.cards.forEach(c => { if (c.status === 3) masteredCards++; }); 
+            }); 
+            const pct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0; 
+            document.getElementById('stat-streak').innerText = stats.streak; 
+            document.getElementById('stat-xp').innerText = stats.xp; 
+            document.getElementById('stat-sessions').innerText = stats.sessions; 
+            document.getElementById('stat-mastery').innerText = `${pct}%`; 
+        }
         function editProfileName() { showModal({ title: 'Zmień nazwę profilu', desc: '', input: true, cancel: true, onOk: (val) => { if(val?.trim()) { stats.name = val.trim(); saveData(); renderProfile(); } }}); }
 
         // --- LOGIKA NAUKI (STUDY MODE) ---
@@ -850,7 +1042,6 @@
             let cardsToPlay = [...deck.cards]; 
             if (mode === 'review') cardsToPlay = cardsToPlay.filter(c => c.status === 1 || c.status === 2); 
             
-            // Losujemy kolejność fiszek na start
             studyState = { deckId: deck.id, cards: cardsToPlay.sort(()=>Math.random()-0.5), currentIndex: 0, sessionXP: 0, sessionCorrect: 0, sessionTotal: cardsToPlay.length }; 
             
             document.getElementById('global-header').classList.add('hidden'); 
@@ -866,7 +1057,7 @@
             document.getElementById('study-progress').style.width = `${(studyState.currentIndex / studyState.sessionTotal) * 100}%`; 
             
             const flipper = document.querySelector('.flipper'); 
-            flipper.style.transition = 'none'; // Wylacza animacje, zapobiega odwrotnemu "flipowi"
+            flipper.style.transition = 'none'; 
             document.getElementById('study-card').classList.remove('flipped'); 
             document.getElementById('study-rating-drawer').classList.add('hidden'); 
             
@@ -874,7 +1065,7 @@
                 const card = studyState.cards[studyState.currentIndex]; 
                 document.getElementById('study-front').innerText = card.front; 
                 document.getElementById('study-back').innerText = ''; 
-                flipper.style.transition = ''; // Przewraca normalny czas po restarcie CSS
+                flipper.style.transition = ''; 
                 document.getElementById('study-action-bar').classList.remove('hidden'); 
             }, 20); 
         }
@@ -934,7 +1125,7 @@
             switchTab('home'); 
         }
 
-        // --- GŁÓWNY MODAL (Używany uniwersalnie do błędów/pytań) ---
+        // --- GŁÓWNY MODAL ---
         let modalOkCallback = null;
         function showModal(opts) { 
             document.getElementById('modal-title').innerText = opts.title; 
@@ -972,7 +1163,7 @@
         
         function hideModal() { 
             document.getElementById('custom-modal').classList.add('hidden'); 
-            modalOkCallback = null; // Czyszczenie odniesienia dla zasobów pamięci
+            modalOkCallback = null;
         }
     </script>
 </body>
