@@ -11,7 +11,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Fiszki">
     <meta name="theme-color" content="#131f24">
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZpc3praSIsCiAgInNob3J0X25hbWUiOiAiRmlzemtpIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxMzFmMjQiLAogICJ0aGVtZV9jb2xvciI6ICIjMTMxZjI0Igp9">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,20 +31,22 @@
                             bg: '#131f24',
                             surface: '#202f36',
                             border: '#37464f',
-                            green: '#58cc02',
-                            red: '#ff4b4b',
-                            blue: '#1cb0f6',
-                            blueDark: '#1899d6',
-                            yellow: '#ffc800',
+                            green: '#58cc02', greenDark: '#58a700',
+                            red: '#ff4b4b', redDark: '#ea2b2b',
+                            blue: '#1cb0f6', blueDark: '#1899d6',
+                            yellow: '#ffc800', yellowDark: '#e5b400',
+                            purple: '#ce82ff', purpleDark: '#a567cc',
+                            orange: '#ff9600', orangeDark: '#cc7800',
+                            pink: '#ff80bf', pinkDark: '#cc6498',
                             text: '#ffffff',
-                            muted: '#afafaf'
+                            muted: '#afafaf',
                         }
                     },
                     fontFamily: { sans: ['Nunito', 'sans-serif'] },
                     animation: {
                         'bounce-in': 'bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-                        'slide-up': 'slideUp 0.3s ease-out forwards',
-                        'streak-pop': 'streakPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                        'slide-up': 'slideUp 0.2s ease-out forwards',
+                        'pulse-slow': 'pulseSlow 2s infinite'
                     },
                     keyframes: {
                         bounceIn: {
@@ -56,11 +57,9 @@
                             '0%': { transform: 'translateY(100%)' },
                             '100%': { transform: 'translateY(0)' }
                         },
-                        streakPop: {
-                            '0%': { transform: 'scale(1) rotate(0deg)' },
-                            '40%': { transform: 'scale(1.7) rotate(-10deg)', color: '#ffc800' },
-                            '60%': { transform: 'scale(1.7) rotate(10deg)' },
-                            '100%': { transform: 'scale(1) rotate(0deg)' }
+                        pulseSlow: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.05)' }
                         }
                     }
                 }
@@ -70,226 +69,187 @@
     
     <style>
         * { -webkit-tap-highlight-color: transparent; outline: none; }
-        body { background-color: #131f24; color: #ffffff; overscroll-behavior-y: none; }
+        body { background-color: #131f24; color: #ffffff; overscroll-behavior-y: none; touch-action: pan-y; }
         
-        /* 3D Button Physics */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 3D Buttons Standard */
         .btn-3d {
-            border-radius: 16px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            border-bottom-width: 4px;
-            transition: transform 0.1s, border-bottom-width 0.1s, background-color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            user-select: none;
+            border-radius: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
+            border-bottom-width: 4px; transition: transform 0.1s, border-bottom-width 0.1s, background-color 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; user-select: none;
         }
         .btn-3d:active { border-bottom-width: 0px; transform: translateY(4px); }
         
-        .btn-primary { background-color: #1cb0f6; border-color: #1899d6; color: white; }
+        /* 3D Okrągłe Węzły na Ścieżce */
+        .node-circle {
+            width: 80px; height: 80px; border-radius: 50%; 
+            border-bottom-width: 8px; border-top-width: 2px; border-left-width: 2px; border-right-width: 2px;
+            display: flex; align-items: center; justify-content: center; position: relative; z-index: 10;
+            cursor: pointer; user-select: none;
+            transition: transform 0.1s, border-bottom-width 0.1s;
+        }
+        .node-circle:active { border-bottom-width: 2px; transform: translateY(6px); }
+
+        .btn-primary { background-color: #1cb0f6; border-color: #1899d6; color: white; } 
         .btn-primary:hover { background-color: #1490cc; }
         .btn-danger { background-color: #ff4b4b; border-color: #ea2b2b; color: white; }
-        .btn-secondary { background-color: #58cc02; border-color: #58a700; color: white; }
-        .btn-warning { background-color: #ffc800; border-color: #e5b400; color: #131f24; }
-        .btn-surface { background-color: #202f36; border-color: #131f24; color: #1cb0f6; border: 2px solid #37464f; border-bottom-width: 4px; }
+        .btn-warning { background-color: #ffc800; border-color: #e5b400; color: white; }
+        .btn-surface { background-color: #202f36; border-color: #37464f; color: #1cb0f6; border: 2px solid #37464f; border-bottom-width: 4px; }
         
         .duo-input {
             background-color: #202f36; border: 2px solid #37464f; border-radius: 16px;
-            color: white; padding: 12px 16px; font-weight: 600; transition: border-color 0.2s;
+            color: white; padding: 12px 16px; font-weight: 600; transition: border-color 0.2s; width: 100%;
         }
         .duo-input:focus { border-color: #1cb0f6; }
 
         /* Progress Bar */
         .progress-bar-bg { background-color: #37464f; border-radius: 999px; overflow: hidden; height: 16px; width: 100%; position: relative; }
-        .progress-bar-fill { background-color: #1cb0f6; height: 100%; border-radius: 999px; transition: width 0.4s ease; position: relative; }
-        .progress-bar-fill::after {
-            content: ''; position: absolute; top: 4px; left: 8px; right: 8px; height: 4px;
-            background-color: rgba(255,255,255,0.25); border-radius: 4px;
-        }
+        .progress-bar-fill { background-color: #1cb0f6; height: 100%; border-radius: 999px; transition: width 0.3s ease; position: relative; }
+        .progress-bar-fill::after { content: ''; position: absolute; top: 4px; left: 8px; right: 8px; height: 4px; background-color: rgba(255,255,255,0.25); border-radius: 4px; }
 
-        /* 3D Card Flip Animation */
+        /* 3D Card Flip */
         .flip-container { perspective: 1000px; width: 100%; height: 280px; }
-        .flipper { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+        .flipper { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
         .flipped .flipper { transform: rotateY(180deg); }
         .front-face, .back-face { 
-            backface-visibility: hidden; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; 
             background-color: #202f36; border: 2px solid #37464f; border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
-        .back-face { transform: rotateY(180deg); border-color: #1cb0f6; background-color: #18242a; }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #37464f; border-radius: 10px; }
+        .back-face { transform: rotateY(180deg) translateZ(0); border-color: #1cb0f6; background-color: #18242a; }
     </style>
 </head>
 <body class="h-screen flex flex-col antialiased">
 
     <!-- GLOBAL HEADER -->
-    <header id="global-header" class="flex items-center justify-between px-4 py-3 bg-duo-bg border-b border-duo-border z-40 sticky top-0">
-        <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('home')">
-            <i class="fa-solid fa-feather-pointed text-duo-blue text-2xl"></i>
-            <h1 class="text-xl font-extrabold text-white tracking-wide">fiszki</h1>
+    <header id="global-header" class="flex items-center justify-between px-4 py-3 bg-duo-bg border-b-2 border-duo-border z-50 sticky top-0 relative">
+        <div class="flex items-center gap-3 cursor-pointer p-1.5 -ml-1.5 rounded-xl hover:bg-white/5 transition" onclick="toggleDrawer()">
+            <div class="w-10 h-10 rounded-xl bg-duo-surface border-2 border-duo-border flex items-center justify-center text-2xl shadow-sm">
+                <span id="header-cat-icon">📚</span>
+            </div>
+            <div>
+                <h1 class="text-sm font-extrabold text-white tracking-wide leading-tight max-w-[120px] truncate" id="topbar-cat-name">Kategoria</h1>
+                <p class="text-[10px] text-duo-blue font-bold -mt-0.5 uppercase tracking-wider flex items-center gap-1">Zmień <i id="drawer-arrow" class="fa-solid fa-angle-down transition-transform"></i></p>
+            </div>
         </div>
+        
         <div class="flex items-center gap-4 font-bold text-sm">
             <div class="flex items-center gap-1.5 text-duo-yellow">
                 <i class="fa-solid fa-fire text-lg"></i><span id="header-streak">0</span>
             </div>
             <div class="flex items-center gap-1.5 text-duo-blue">
-                <i class="fa-solid fa-bolt text-lg"></i><span id="header-xp">0</span>
+                <i class="fa-solid fa-gem text-lg"></i><span id="header-xp">0</span>
             </div>
         </div>
     </header>
 
-    <!-- CONTENT (Zwiększony pb-32 aby nie chowało się pod nowym dużym nav) -->
-    <main class="flex-1 overflow-y-auto pb-32 md:pb-6 relative w-full max-w-2xl mx-auto">
-        <!-- HOME (DECKS) -->
-        <section id="view-home" class="p-4 space-y-6">
-            <div class="flex items-center justify-between mb-2">
-                <h2 class="text-2xl font-extrabold text-white">Twoje Talie</h2>
-                <button onclick="promptNewDeck()" class="text-duo-blue font-bold uppercase tracking-wider text-sm"><i class="fa-solid fa-plus mr-1"></i> Nowa</button>
+    <!-- WYSUWANY PANEL Z KATEGORIAMI -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/60 z-40 hidden backdrop-blur-sm transition-opacity" onclick="toggleDrawer()"></div>
+    <div id="category-drawer" class="fixed top-[68px] left-0 right-0 bg-duo-surface border-b-2 border-duo-border z-40 transform -translate-y-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col rounded-b-3xl">
+        <div class="p-5">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-white font-extrabold text-xs uppercase tracking-wider text-duo-muted">Kategorie</h3>
+                <button onclick="openNewCategoryModal()" class="text-duo-blue font-extrabold text-xs uppercase bg-duo-blue/10 px-3 py-2 rounded-xl transition hover:bg-duo-blue/20"><i class="fa-solid fa-plus mr-1"></i> Dodaj Nową</button>
             </div>
-            <div id="decks-container" class="space-y-5"></div>
+            <nav id="drawer-horizontal-bar" class="flex flex-nowrap overflow-x-auto gap-4 pb-2 no-scrollbar items-stretch w-full"></nav>
+        </div>
+    </div>
+
+    <main class="flex-1 overflow-y-auto pb-32 relative w-full max-w-2xl mx-auto" onscroll="drawPath()">
+        <!-- HOME (PATH VIEW) -->
+        <section id="view-home" class="pt-16 pb-8 px-4 min-h-full flex flex-col relative overflow-hidden">
+            <svg id="path-svg" class="absolute top-0 left-0 w-full h-full z-0 pointer-events-none"></svg>
+            <div id="decks-path-container" class="w-full flex flex-col items-center relative z-10"></div>
         </section>
 
         <!-- ADD/IMPORT -->
         <section id="view-add" class="hidden p-4 space-y-6">
-            <h2 class="text-2xl font-extrabold text-white text-center">Zarządzaj materiałem</h2>
+            <h2 class="text-2xl font-extrabold text-white text-center mb-2 mt-4">Zarządzaj Talią</h2>
             
-            <!-- DOCELOWA TALIA -->
             <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
-                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider">
-                    <i class="fa-solid fa-folder-open text-duo-yellow mr-1"></i> Wybierz lub utwórz talię
-                </h3>
-                <select id="quick-add-deck" class="duo-input w-full appearance-none mb-2" onchange="toggleNewDeckInput()"></select>
-                <input type="text" id="new-deck-name" placeholder="Wpisz nazwę nowej talii..." class="duo-input w-full hidden border-duo-yellow focus:border-duo-yellow text-white">
-            </div>
-
-            <!-- MANUAL ADD -->
-            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
-                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-bolt text-duo-blue mr-1"></i> Dodaj pojedynczą fiszkę</h3>
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-bolt text-duo-yellow mr-1"></i> Szybka fiszka</h3>
+                <select id="quick-add-deck" class="duo-input appearance-none mb-2"></select>
                 <div class="space-y-3 pt-2">
-                    <input type="text" id="add-front" placeholder="Przód (np. Apple)" class="duo-input w-full text-lg">
-                    <input type="text" id="add-back" placeholder="Tył (np. Jabłko)" class="duo-input w-full text-lg">
+                    <input type="text" id="add-front" placeholder="Przód (np. Apple)" class="duo-input text-base">
+                    <input type="text" id="add-back" placeholder="Tył (np. Jabłko)" class="duo-input text-base">
                 </div>
                 <button onclick="addSingleCard()" class="btn-3d btn-primary w-full py-3.5 text-[15px] mt-2">Dodaj Fiszkę</button>
             </div>
-            
+
             <!-- AI GENERATOR -->
             <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
-                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-wand-magic-sparkles text-duo-green mr-1"></i> 1. Wygeneruj z AI</h3>
-                <input type="text" id="ai-topic" placeholder="Wpisz temat (np. Czasowniki nieregularne)" class="duo-input w-full text-sm">
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-wand-magic-sparkles text-duo-purple mr-1"></i> Generuj z AI</h3>
+                <input type="text" id="ai-topic" placeholder="Wpisz temat (np. Biologia, Czasowniki)" class="duo-input text-sm">
                 
                 <div class="flex gap-3 mt-2">
-                    <input type="number" id="ai-count" value="15" min="1" max="100" class="duo-input w-24 text-sm text-center">
+                    <input type="number" id="ai-count" value="15" min="1" max="100" class="duo-input w-24 text-sm text-center" title="Ilość">
                     <select id="ai-lang" class="duo-input flex-1 text-sm appearance-none">
                         <option>Angielski</option><option>Niemiecki</option><option>Hiszpański</option><option>Polski</option>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-3">
-                    <button onclick="generateAndCopyPrompt('text')" class="btn-3d btn-surface py-3 text-[11px]"><i class="fa-solid fa-keyboard"></i> Z Tematu</button>
-                    <button onclick="generateAndCopyPrompt('vision')" class="btn-3d btn-secondary py-3 text-[11px]"><i class="fa-solid fa-camera"></i> Ze Zdjęcia</button>
+                    <button onclick="generateAndCopyPrompt('text')" class="btn-3d btn-surface py-3 text-[11px]"><i class="fa-solid fa-keyboard"></i> Z tekstu</button>
+                    <button onclick="generateAndCopyPrompt('vision')" class="btn-3d btn-surface border-duo-purple text-duo-purple py-3 text-[11px]"><i class="fa-solid fa-camera"></i> Ze Zdjęcia</button>
                 </div>
             </div>
             
-            <!-- AI IMPORT -->
             <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
-                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-file-import text-duo-blue mr-1"></i> 2. Wklej Wynik AI</h3>
-                <p class="text-[11px] text-duo-muted font-bold leading-relaxed">Format: <span class="text-white">Pojęcie | Odpowiedź</span></p>
-                <textarea id="import-text" rows="5" placeholder="Wklej tu odpowiedź od AI..." class="duo-input w-full text-sm font-mono"></textarea>
-                <button onclick="importCards()" class="btn-3d btn-primary w-full py-3.5 text-[15px]">Zaimportuj Do Talii</button>
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-file-import text-duo-blue mr-1"></i> Wklej fiszki (Format: Przód | Tył)</h3>
+                <textarea id="import-text" rows="4" placeholder="Apple | Jabłko&#10;Car | Samochód" class="duo-input text-sm font-mono"></textarea>
+                <button onclick="importCards()" class="btn-3d btn-primary w-full py-3.5 text-[15px]">Zaimportuj do wybranej talii</button>
             </div>
         </section>
 
         <!-- PROFILE -->
         <section id="view-profile" class="hidden p-4 space-y-6">
-            <div class="flex items-center justify-between pb-6 border-b-2 border-duo-border">
+            <div class="flex items-center justify-between pb-6 border-b-2 border-duo-border mt-4">
                 <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center text-3xl shadow-sm">🧠</div>
+                    <div class="w-16 h-16 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center text-3xl shadow-sm">
+                        <i class="fa-solid fa-user text-duo-blue"></i>
+                    </div>
                     <div>
                         <div class="flex items-center gap-2">
                             <h2 class="text-2xl font-extrabold text-white" id="profile-name-display">Uczeń</h2>
                             <button onclick="editProfileName()" class="text-duo-muted hover:text-white transition"><i class="fa-solid fa-pen text-sm"></i></button>
                         </div>
-                        <p class="text-duo-blue font-bold text-sm">Gotowy do nauki</p>
+                        <p class="text-duo-blue font-bold text-sm">Twój profil</p>
                     </div>
                 </div>
             </div>
-
             <div>
-                <h3 class="text-lg font-extrabold text-white mb-3">Twoje osiągnięcia</h3>
+                <h3 class="text-lg font-extrabold text-white mb-3">Statystyki</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                        <i class="fa-solid fa-bolt text-3xl text-duo-blue w-8 text-center"></i>
-                        <div>
-                            <div class="text-2xl font-extrabold text-white" id="stat-xp">0</div>
-                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Punkty XP</div>
-                        </div>
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                        <i class="fa-solid fa-gem text-3xl text-duo-blue w-8 text-center"></i>
+                        <div><div class="text-2xl font-extrabold text-white" id="stat-xp">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Punkty XP</div></div>
                     </div>
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
                         <i class="fa-solid fa-fire text-3xl text-duo-yellow w-8 text-center"></i>
-                        <div>
-                            <div class="text-2xl font-extrabold text-white" id="stat-streak">0</div>
-                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Dni z rzędu</div>
-                        </div>
+                        <div><div class="text-2xl font-extrabold text-white" id="stat-streak">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Dni z rzędu</div></div>
                     </div>
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                        <i class="fa-solid fa-brain text-3xl text-duo-green w-8 text-center"></i>
-                        <div>
-                            <div class="text-2xl font-extrabold text-white" id="stat-mastery">0%</div>
-                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Opanowany materiał</div>
-                        </div>
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                        <i class="fa-solid fa-crown text-3xl text-duo-yellow w-8 text-center"></i>
+                        <div><div class="text-2xl font-extrabold text-white" id="stat-mastery">0%</div><div class="text-[10px] font-bold text-duo-muted uppercase">Opanowane</div></div>
                     </div>
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                        <i class="fa-solid fa-trophy text-3xl text-duo-yellow w-8 text-center" style="color: #e5b400"></i>
-                        <div>
-                            <div class="text-2xl font-extrabold text-white" id="stat-sessions">0</div>
-                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Ukończone lekcje</div>
-                        </div>
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3">
+                        <i class="fa-solid fa-book-open text-3xl text-duo-blue w-8 text-center"></i>
+                        <div><div class="text-2xl font-extrabold text-white" id="stat-sessions">0</div><div class="text-[10px] font-bold text-duo-muted uppercase">Lekcje</div></div>
                     </div>
                 </div>
-            </div>
-
-            <div class="pt-2">
-                <h3 class="text-lg font-extrabold text-white mb-3">Słabe punkty</h3>
-                <div id="problematic-words-list" class="space-y-3"></div>
-            </div>
-
-            <div class="pt-4 grid grid-cols-2 gap-3">
-                <button onclick="exportDecks()" class="text-duo-blue border-2 border-duo-blue rounded-xl font-bold uppercase tracking-wider text-xs text-center py-3 hover:bg-duo-blue/10">
-                    <i class="fa-solid fa-download mr-1"></i> Eksportuj Dane
-                </button>
-                <button onclick="resetStats()" class="text-duo-red border-2 border-duo-red rounded-xl font-bold uppercase tracking-wider text-xs text-center py-3 hover:bg-duo-red/10">
-                    <i class="fa-solid fa-trash mr-1"></i> Zresetuj Profil
-                </button>
             </div>
         </section>
     </main>
 
-    <!-- MOBILE PWA BANNER (Zwiększony i podniesiony wyżej na bottom-28) -->
-    <div id="pwa-install-banner" class="hidden fixed bottom-[110px] left-4 right-4 bg-duo-surface border-2 border-duo-blue rounded-3xl p-5 shadow-2xl z-30 animate-slide-up md:max-w-md md:left-auto md:right-4 md:bottom-6">
-        <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center justify-center w-14 h-14 bg-duo-bg border-2 border-duo-border rounded-xl shrink-0">
-                <i class="fa-solid fa-download text-duo-blue text-2xl"></i>
-            </div>
-            <div class="flex-1 pt-0.5">
-                <h4 class="text-white font-extrabold text-base mb-1">Zainstaluj aplikację</h4>
-                <p id="pwa-instructions" class="text-xs text-duo-muted font-bold leading-relaxed">Zainstaluj na ekranie głównym.</p>
-            </div>
-            <button onclick="dismissPwaBanner()" class="text-duo-muted hover:text-white p-2 -mt-2 -mr-2"><i class="fa-solid fa-xmark text-xl"></i></button>
-        </div>
-    </div>
-
-    <!-- WIEKSZY, BEZPIECZNIEJSZY PASK NAWIGACJI (Duży pb-8 padding u dołu na telefony) -->
-    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-duo-bg border-t-2 border-duo-border z-40 pb-8 pt-2 px-2">
-        <div class="max-w-2xl mx-auto flex justify-between items-center px-4">
-            <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center p-3 text-duo-blue transition"><i class="fa-solid fa-house text-3xl mb-1"></i></button>
-            <button onclick="switchTab('add')" id="nav-btn-add" class="flex flex-col items-center p-3 text-duo-muted hover:text-white transition"><i class="fa-solid fa-circle-plus text-3xl mb-1"></i></button>
-            <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center p-3 text-duo-muted hover:text-white transition"><i class="fa-solid fa-user text-3xl mb-1"></i></button>
+    <!-- BOTTOM NAV -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-duo-bg border-t-2 border-duo-border z-30 pb-8 pt-2 px-2">
+        <div class="max-w-md mx-auto flex justify-between items-center px-8">
+            <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center p-3 text-duo-blue transition"><i class="fa-solid fa-house text-3xl"></i></button>
+            <button onclick="switchTab('add')" id="nav-btn-add" class="flex flex-col items-center p-3 text-duo-muted hover:text-white transition"><i class="fa-solid fa-dumbbell text-3xl"></i></button>
+            <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center p-3 text-duo-muted hover:text-white transition"><i class="fa-solid fa-user text-3xl"></i></button>
         </div>
     </nav>
 
@@ -299,78 +259,127 @@
             <button onclick="quitStudy()" class="text-duo-muted hover:text-white text-2xl font-bold p-2"><i class="fa-solid fa-xmark"></i></button>
             <div class="progress-bar-bg"><div id="study-progress" class="progress-bar-fill" style="width: 0%"></div></div>
         </div>
-
-        <!-- 3D Card Area -->
         <div class="flex-1 flex flex-col justify-center items-center p-6 text-center">
-            <div class="flip-container cursor-pointer" id="study-card" onclick="if(isCardCheckable) revealAnswer()">
+            <div class="flip-container cursor-pointer" id="study-card" onclick="revealAnswer()">
                 <div class="flipper">
-                    <!-- FRONT -->
-                    <div class="front-face">
-                        <h3 class="text-duo-muted font-bold uppercase tracking-wider mb-4 text-sm">Pojęcie</h3>
-                        <h2 id="study-front" class="text-4xl font-extrabold text-white leading-tight break-words w-full"></h2>
-                        <span class="mt-8 text-xs text-duo-muted font-bold"><i class="fa-solid fa-hand-pointer mr-1"></i> Dotknij by odwrócić</span>
-                    </div>
-                    <!-- BACK -->
+                    <div class="front-face"><h2 id="study-front" class="text-4xl font-extrabold text-white leading-tight break-words w-full"></h2></div>
                     <div class="back-face">
                         <h3 class="text-duo-blue font-bold uppercase tracking-wider mb-4 text-sm">Odpowiedź</h3>
-                        <h2 id="study-back" class="text-3xl font-extrabold text-white leading-tight break-words w-full text-duo-green"></h2>
+                        <h2 id="study-back" class="text-3xl font-extrabold text-duo-blue leading-tight break-words w-full"></h2>
                     </div>
                 </div>
             </div>
         </div>
-
         <div id="study-action-bar" class="p-4 pb-8 border-t-2 border-duo-border bg-duo-bg">
             <button onclick="revealAnswer()" class="btn-3d btn-primary w-full py-4 text-[16px]">SPRAWDŹ</button>
         </div>
-
-        <!-- Rating Drawer -->
-        <div id="study-rating-drawer" class="hidden absolute bottom-0 left-0 right-0 bg-duo-surface border-t-2 border-duo-border rounded-t-3xl shadow-2xl animate-slide-up flex flex-col z-50 pb-6">
-            <div class="p-6">
-                <h4 class="text-duo-muted font-bold text-xs uppercase tracking-wider mb-4 text-center">Oceń swoją pamięć</h4>
+        <div id="study-rating-drawer" class="hidden absolute bottom-0 left-0 right-0 bg-duo-surface border-t-2 border-duo-border rounded-t-3xl shadow-2xl flex flex-col z-50 pb-8 pt-4">
+            <div class="px-6">
+                <h4 class="text-white font-extrabold text-lg mb-4 text-center">Jak poszło?</h4>
                 <div class="grid grid-cols-3 gap-3">
-                    <button onclick="rateCard(1)" class="btn-3d btn-danger py-4 flex flex-col gap-1 items-center"><span class="text-xs">TRUDNE</span></button>
-                    <button onclick="rateCard(2)" class="btn-3d btn-warning py-4 flex flex-col gap-1 items-center"><span class="text-xs">ŚREDNIE</span></button>
-                    <button onclick="rateCard(3)" class="btn-3d btn-secondary py-4 flex flex-col gap-1 items-center"><span class="text-xs">ŁATWE</span></button>
+                    <button onclick="rateCard(1)" class="btn-3d btn-danger py-4 flex flex-col items-center"><span class="text-xs">TRUDNE</span></button>
+                    <button onclick="rateCard(2)" class="btn-3d btn-warning py-4 flex flex-col items-center"><span class="text-xs">ŚREDNIE</span></button>
+                    <button onclick="rateCard(3)" class="btn-3d btn-primary py-4 flex flex-col items-center"><span class="text-xs">ŁATWE</span></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- STUDY OPTIONS MODAL (ALL vs REVIEW) -->
+    <!-- DECK OPTIONS MODAL (ZMIANA NAZWY / USUWANIE) -->
+    <div id="deck-options-modal" class="hidden fixed inset-0 bg-black/70 z-[85] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
+            <button onclick="closeDeckOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Opcje Talii</h3>
+            <p class="text-duo-muted font-bold text-sm mb-5">Zmień nazwę lub usuń tę talię ze ścieżki.</p>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1">Nazwa Talii</label>
+                    <input type="text" id="deck-edit-name" class="duo-input font-bold" placeholder="Wpisz nazwę">
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <button onclick="saveDeckName()" class="btn-3d btn-primary w-full py-4 text-sm">ZAPISZ ZMIANY</button>
+                <button onclick="confirmDeleteDeckBtn()" class="btn-3d btn-danger w-full py-4 text-sm"><i class="fa-solid fa-trash mr-1"></i> USUŃ TALIĘ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE DECK MODAL -->
+    <div id="create-deck-modal" class="hidden fixed inset-0 bg-black/70 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
+            <button onclick="closeNewDeckModal()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Nowa Talia</h3>
+            <p class="text-duo-muted font-bold text-sm mb-5">Dodaj nową talię do tej kategorii na ścieżkę.</p>
+            <div class="space-y-4 mb-6"><input type="text" id="modal-new-deck-name" class="duo-input text-white font-bold" placeholder="np. Lekcja 2"></div>
+            <button onclick="submitNewDeck()" class="btn-3d btn-primary w-full py-4 text-sm">DODAJ</button>
+        </div>
+    </div>
+
+    <!-- CREATE CATEGORY MODAL -->
+    <div id="create-category-modal" class="hidden fixed inset-0 bg-black/70 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
+            <button onclick="closeNewCategoryModal()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Nowa Kategoria</h3>
+            <p class="text-duo-muted font-bold text-sm mb-4">Wybierz z listy poniżej lub wpisz własną emotkę.</p>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <div class="flex gap-2 mb-3 flex-wrap justify-center bg-duo-bg p-3 rounded-xl border-2 border-duo-border">
+                        <button onclick="setEmoji('🇬🇧')" class="text-2xl hover:scale-110 transition active:scale-95">🇬🇧</button>
+                        <button onclick="setEmoji('🇪🇸')" class="text-2xl hover:scale-110 transition active:scale-95">🇪🇸</button>
+                        <button onclick="setEmoji('🇩🇪')" class="text-2xl hover:scale-110 transition active:scale-95">🇩🇪</button>
+                        <button onclick="setEmoji('🧬')" class="text-2xl hover:scale-110 transition active:scale-95">🧬</button>
+                        <button onclick="setEmoji('💻')" class="text-2xl hover:scale-110 transition active:scale-95">💻</button>
+                        <button onclick="setEmoji('⚖️')" class="text-2xl hover:scale-110 transition active:scale-95">⚖️</button>
+                        <button onclick="setEmoji('🎨')" class="text-2xl hover:scale-110 transition active:scale-95">🎨</button>
+                        <button onclick="setEmoji('📚')" class="text-2xl hover:scale-110 transition active:scale-95">📚</button>
+                    </div>
+                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1 text-center">Twoja Emotka (Wpisz dowolną)</label>
+                    <input type="text" id="modal-new-cat-emoji" class="duo-input text-3xl text-center py-4" value="📚">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-duo-muted uppercase mb-1">Nazwa Kategorii</label>
+                    <input type="text" id="modal-new-cat-name" class="duo-input text-white font-bold" placeholder="np. Język Hiszpański">
+                </div>
+            </div>
+            <button onclick="submitNewCategory()" class="btn-3d btn-primary w-full py-4 text-sm">UTWÓRZ KATEGORIĘ</button>
+        </div>
+    </div>
+
+    <!-- STUDY OPTIONS MODAL -->
     <div id="study-options-modal" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
             <button onclick="closeStudyOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Wybierz tryb nauki</h3>
-            <p class="text-duo-muted font-bold text-sm mb-6 leading-relaxed">Ta talia zawiera fiszki, które ostatnio sprawiły Ci problem. Jak chcesz się uczyć?</p>
-            
+            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Wybierz tryb</h3>
+            <p class="text-duo-muted font-bold text-sm mb-6">Ta talia ma słówka, które wymagają powtórki.</p>
             <div class="space-y-3">
-                <button onclick="startStudyMode('all')" class="btn-3d btn-primary w-full py-4 flex flex-col">
-                    <span class="text-sm">WSZYSTKIE FISZKI</span>
-                    <span class="text-[10px] font-bold text-white/70" id="opt-all-count">0</span>
+                <button onclick="startStudyMode('all')" class="btn-3d btn-surface w-full py-4 flex flex-col">
+                    <span class="text-sm">ZWYKŁA LEKCJA</span><span class="text-[10px] font-bold text-duo-muted" id="opt-all-count">0</span>
                 </button>
-                <button onclick="startStudyMode('review')" class="btn-3d btn-warning w-full py-4 flex flex-col">
-                    <span class="text-sm">TRENUJ SŁABE PUNKTY</span>
-                    <span class="text-[10px] font-bold text-duo-bg/70" id="opt-review-count">0 (Średnie/Trudne)</span>
+                <button onclick="startStudyMode('review')" class="btn-3d btn-danger w-full py-4 flex flex-col">
+                    <span class="text-sm">TRENUJ BŁĘDY</span><span class="text-[10px] font-bold text-white/70" id="opt-review-count">0 fiszek</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- LESSON COMPLETE -->
-    <div id="lesson-complete-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col justify-between items-center text-center pb-8 pt-20 px-6">
+    <div id="lesson-complete-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col justify-between items-center text-center pb-12 pt-24 px-6">
         <div class="space-y-6 flex flex-col items-center animate-bounce-in w-full">
             <div class="w-32 h-32 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center mb-2 shadow-xl">
-                <i id="complete-streak-icon" class="fa-solid fa-fire text-6xl text-duo-yellow"></i>
+                <i class="fa-solid fa-check text-6xl text-duo-blue"></i>
             </div>
-            <h2 class="text-4xl font-extrabold text-duo-blue">Świetna robota!</h2>
+            <h2 class="text-4xl font-extrabold text-duo-yellow">Lekcja ukończona!</h2>
             <div class="grid grid-cols-2 gap-4 mt-8 w-full max-w-sm">
                 <div class="bg-duo-surface border-2 border-duo-blue rounded-xl p-4 flex flex-col items-center">
                     <span class="block text-duo-blue font-extrabold text-xl mb-1 uppercase tracking-wide">XP</span>
                     <span class="text-white font-extrabold text-2xl" id="complete-xp">+0</span>
                 </div>
                 <div class="bg-duo-surface border-2 border-duo-yellow rounded-xl p-4 flex flex-col items-center">
-                    <span class="block text-duo-yellow font-extrabold text-xl mb-1 uppercase tracking-wide">Passa</span>
-                    <span class="text-white font-extrabold text-2xl" id="complete-streak-text">0 Dni</span>
+                    <span class="block text-duo-yellow font-extrabold text-xl mb-1 uppercase tracking-wide">Skuteczność</span>
+                    <span class="text-white font-extrabold text-2xl" id="complete-acc">100%</span>
                 </div>
             </div>
         </div>
@@ -379,14 +388,12 @@
         </div>
     </div>
 
-    <!-- REUSABLE MODAL -->
-    <div id="custom-modal" class="hidden fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- REUSABLE MODAL (DLA BŁĘDÓW/ALERTÓW) -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-black/70 z-[90] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in">
             <h3 id="modal-title" class="text-xl font-extrabold text-white mb-2">Tytuł</h3>
             <p id="modal-desc" class="text-duo-muted font-bold text-sm mb-5 leading-relaxed">Opis</p>
-            <div id="modal-input-wrapper" class="hidden mb-5">
-                <input type="text" id="modal-input" class="duo-input w-full" placeholder="...">
-            </div>
+            <div id="modal-input-wrapper" class="hidden mb-5"><input type="text" id="modal-input" class="duo-input" placeholder="..."></div>
             <div class="flex gap-3">
                 <button id="modal-btn-cancel" class="hidden flex-1 btn-3d btn-surface py-3 text-sm">ANULUJ</button>
                 <button id="modal-btn-ok" class="flex-1 btn-3d btn-primary py-3 text-sm">GOTOWE</button>
@@ -395,38 +402,92 @@
     </div>
 
     <script>
+        // Główny state aplikacji
         let decks = [];
+        let categoryEmojis = {};
         let stats = { name: 'Uczeń', streak: 0, xp: 0, sessions: 0, lastDate: '' };
-        let studyState = { deckId: null, cards: [], currentIndex: 0, sessionXP: 0, sessionCorrect: 0 };
+        let studyState = { deckId: null, cards: [], currentIndex: 0, sessionXP: 0, sessionCorrect: 0, sessionTotal: 0 };
+        
         let isCardCheckable = false;
         let selectedDeckForStudy = null;
+        let currentCategory = null;
+        let drawerOpen = false;
+        let activeDeckForOptions = null; // ID talii do edycji
 
         document.addEventListener('DOMContentLoaded', () => {
             loadData(); 
             updateHeaderUI(); 
-            renderDecks(); 
             switchTab('home');
-            checkPwaBanner(); 
+            window.addEventListener('resize', () => requestAnimationFrame(drawPath));
         });
+
+        // W pełni bezpieczna funkcja zabezpieczająca przed złośliwym kodem (XSS)
+        function escape(str) { 
+            return String(str||'')
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;"); 
+        }
+
+        // Unikalne, bezpieczne ID
+        function generateId(prefix) {
+            return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        }
+
+        function getEmojiForCat(catName) {
+            if (categoryEmojis[catName]) return categoryEmojis[catName];
+            const map = {
+                'Angielski': '🇬🇧', 'Hiszpański': '🇪🇸', 'Niemiecki': '🇩🇪', 
+                'Francuski': '🇫🇷', 'Polski': '🇵🇱', 'Włoski': '🇮🇹',
+                'Biologia': '🧬', 'Chemia': '🧪', 'Fizyka': '⚛️', 
+                'Matematyka': '📐', 'Prawo': '⚖️', 'Historia': '🏛️'
+            };
+            return map[catName] || '📚';
+        }
+
+        function setEmoji(emoji) {
+            document.getElementById('modal-new-cat-emoji').value = emoji;
+        }
 
         function loadData() {
             try {
-                decks = JSON.parse(localStorage.getItem('duo_fiszki_decks_v4')) || [];
-                let savedStats = JSON.parse(localStorage.getItem('duo_fiszki_stats_v4'));
+                // Migracja z v14 do bezpiecznego v15 bez utraty danych
+                decks = JSON.parse(localStorage.getItem('duo_fiszki_decks_v15')) || JSON.parse(localStorage.getItem('duo_fiszki_decks_v14')) || [];
+                categoryEmojis = JSON.parse(localStorage.getItem('duo_fiszki_emojis_v15')) || JSON.parse(localStorage.getItem('duo_fiszki_emojis_v14')) || {};
+                let savedStats = JSON.parse(localStorage.getItem('duo_fiszki_stats_v15')) || JSON.parse(localStorage.getItem('duo_fiszki_stats_v14'));
                 if(savedStats) stats = { ...stats, ...savedStats };
-            } catch(e) {}
+                currentCategory = localStorage.getItem('duo_fiszki_cat_v15') || localStorage.getItem('duo_fiszki_cat_v14');
+            } catch(e) { console.error("Data load error", e); }
+
             if (decks.length === 0) {
-                decks.push({ id: 'd_' + Date.now(), title: 'Angielski - Na Start', cards: [
-                    { id: 'c1', front: 'To procrastinate', back: 'Odwlekać', status: 0 },
-                    { id: 'c2', front: 'Resilience', back: 'Odporność / Wytrzymałość', status: 0 }
-                ]}); saveData();
+                decks.push({ id: generateId('d'), title: 'Podstawy', category: 'Angielski', cards: [
+                    { id: generateId('c'), front: 'To procrastinate', back: 'Odwlekać', status: 0 },
+                    { id: generateId('c'), front: 'Resilience', back: 'Odporność / Wytrzymałość', status: 0 }
+                ]});
+                categoryEmojis['Angielski'] = '🇬🇧';
+                saveData();
             }
+
+            const allCats = [...new Set(decks.map(d => d.category || 'Inne'))];
+            if(!currentCategory || !allCats.includes(currentCategory)) currentCategory = allCats[0] || 'Inne';
+            
+            updateCategoryHeader();
+            saveData(); 
             checkStreak();
         }
 
+        function updateCategoryHeader() {
+            document.getElementById('topbar-cat-name').innerText = currentCategory;
+            document.getElementById('header-cat-icon').innerText = getEmojiForCat(currentCategory);
+        }
+
         function saveData() {
-            localStorage.setItem('duo_fiszki_decks_v4', JSON.stringify(decks));
-            localStorage.setItem('duo_fiszki_stats_v4', JSON.stringify(stats));
+            localStorage.setItem('duo_fiszki_decks_v15', JSON.stringify(decks));
+            localStorage.setItem('duo_fiszki_emojis_v15', JSON.stringify(categoryEmojis));
+            localStorage.setItem('duo_fiszki_stats_v15', JSON.stringify(stats));
+            if(currentCategory) localStorage.setItem('duo_fiszki_cat_v15', currentCategory);
         }
 
         function checkStreak() {
@@ -443,344 +504,476 @@
             document.getElementById('header-xp').innerText = stats.xp;
         }
 
+        // --- DRAWER ---
+        function toggleDrawer() {
+            drawerOpen = !drawerOpen;
+            const drawer = document.getElementById('category-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            const arrow = document.getElementById('drawer-arrow');
+
+            if (drawerOpen) {
+                overlay.classList.remove('hidden');
+                drawer.classList.remove('hidden');
+                renderDrawerBar();
+                
+                requestAnimationFrame(() => {
+                    drawer.classList.remove('-translate-y-full');
+                    arrow.classList.add('rotate-180');
+                });
+            } else {
+                drawer.classList.add('-translate-y-full');
+                arrow.classList.remove('rotate-180');
+                setTimeout(() => {
+                    drawer.classList.add('hidden');
+                    overlay.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function renderDrawerBar() {
+            const bar = document.getElementById('drawer-horizontal-bar');
+            const allCats = [...new Set(decks.map(d => d.category || 'Inne'))];
+            
+            bar.innerHTML = allCats.map(cat => {
+                const isActive = cat === currentCategory;
+                const bgClass = isActive ? 'bg-duo-blue' : 'bg-duo-surface';
+                const borderClass = isActive ? 'border-duo-blueDark' : 'border-duo-border';
+                const textColor = isActive ? 'text-white' : 'text-duo-muted';
+                const emojiBg = isActive ? 'bg-white/20' : 'bg-duo-bg';
+
+                return `
+                <div class="flex-shrink-0 w-32 rounded-2xl border-2 border-b-4 ${bgClass}${borderClass} p-3 flex flex-col items-center justify-center cursor-pointer transition-transform active:scale-95" onclick="selectCategory('${escape(cat)}')">
+                    <div class="w-10 h-10 rounded-xl ${emojiBg} border-2 border-black/10 flex items-center justify-center text-2xl shadow-sm mb-2">
+                        ${getEmojiForCat(cat)}
+                    </div>
+                    <span class="font-extrabold ${textColor} text-xs text-center w-full truncate">${escape(cat)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function selectCategory(cat) {
+            currentCategory = cat;
+            updateCategoryHeader();
+            saveData();
+            if (drawerOpen) toggleDrawer();
+            renderPath();
+        }
+
+        // --- NOWA KATEGORIA ---
+        function openNewCategoryModal() {
+            if(drawerOpen) toggleDrawer();
+            document.getElementById('modal-new-cat-name').value = '';
+            document.getElementById('modal-new-cat-emoji').value = '📚';
+            document.getElementById('create-category-modal').classList.remove('hidden');
+        }
+        function closeNewCategoryModal() {
+            document.getElementById('create-category-modal').classList.add('hidden');
+        }
+        function submitNewCategory() {
+            const name = document.getElementById('modal-new-cat-name').value.trim();
+            const emoji = document.getElementById('modal-new-cat-emoji').value.trim() || '📚';
+            if(!name) return showModal({ title: "Błąd", desc: "Podaj nazwę kategorii." });
+            
+            currentCategory = name;
+            categoryEmojis[name] = emoji;
+            
+            // Tworzymy nową kategorię od razu z jedną domyślną talią o nazwie "Podstawy" (zamiast "Talia 1")
+            decks.push({ id: generateId('d'), title: 'Podstawy', category: currentCategory, cards: [] });
+            
+            updateCategoryHeader();
+            saveData();
+            closeNewCategoryModal();
+            renderPath();
+        }
+
+        // --- TAB SWAP ---
         function switchTab(tabId) {
             ['home', 'add', 'profile'].forEach(id => {
                 document.getElementById(`view-${id}`).classList.add('hidden');
-                document.getElementById(`nav-btn-${id}`)?.classList.replace('text-duo-blue', 'text-duo-muted');
+                const btn = document.getElementById(`nav-btn-${id}`);
+                if(btn) btn.classList.replace('text-duo-blue', 'text-duo-muted');
             });
+            
             document.getElementById(`view-${tabId}`).classList.remove('hidden');
-            document.getElementById(`nav-btn-${tabId}`)?.classList.replace('text-duo-muted', 'text-duo-blue');
-            if(tabId === 'home') renderDecks();
+            const activeBtn = document.getElementById(`nav-btn-${tabId}`);
+            if(activeBtn) activeBtn.classList.replace('text-duo-muted', 'text-duo-blue');
+            
+            if(tabId === 'home') renderPath();
             if(tabId === 'add') populateAddSelect();
             if(tabId === 'profile') renderProfile();
         }
 
-        // --- RENDER HOME ---
-        function renderDecks() {
-            const container = document.getElementById('decks-container'); container.innerHTML = '';
-            decks.forEach(deck => {
+        // --- RYSOWANIE ŚCIEŻKI I TALII ---
+        function renderPath() {
+            const container = document.getElementById('decks-path-container'); 
+            container.innerHTML = '';
+            
+            const catDecks = decks.filter(d => (d.category || 'Inne') === currentCategory);
+            
+            const offsets = [0, -30, -45, -30, 0, 30, 45, 30];
+            
+            // Poprawka: Nawet jeśli kategoria jest pusta, wyświetlamy przycisk tworzenia talii (brak "ślepego zaułka")
+            if(catDecks.length === 0) {
+                container.innerHTML = `
+                    <p class="text-duo-muted font-bold text-center mt-10 mb-6">Ta kategoria nie ma jeszcze talii.</p>
+                    <div class="path-node-wrapper relative flex justify-center w-full">
+                        <button onclick="openNewDeckModal()" class="node-circle bg-white border-gray-300 hover:bg-gray-100 transition active:scale-95 text-duo-blue">
+                            <i class="fa-solid fa-plus text-4xl"></i>
+                        </button>
+                    </div>`;
+                document.getElementById('path-svg').innerHTML = '';
+                return;
+            }
+
+            const vibrantColors = [
+                { bg: 'bg-duo-blue', border: 'border-duo-blueDark' },
+                { bg: 'bg-duo-green', border: 'border-duo-greenDark' },
+                { bg: 'bg-duo-purple', border: 'border-duo-purpleDark' },
+                { bg: 'bg-duo-orange', border: 'border-duo-orangeDark' },
+                { bg: 'bg-duo-pink', border: 'border-duo-pinkDark' }
+            ];
+            const styleGold = { bg: 'bg-duo-yellow', border: 'border-duo-yellowDark' };
+            const styleDanger = { bg: 'bg-duo-red', border: 'border-duo-redDark' };
+            
+            catDecks.forEach((deck, index) => {
+                const offset = offsets[index % offsets.length];
                 const total = deck.cards.length;
                 const mastered = deck.cards.filter(c => c.status === 3).length;
                 const toReview = deck.cards.filter(c => c.status === 1 || c.status === 2).length;
-                const unseen = deck.cards.filter(c => c.status === 0).length;
                 
-                const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                let activeStyle = vibrantColors[index % vibrantColors.length];
+                let icon = 'fa-star'; 
+                let pulseClass = (index === catDecks.length - 1 && toReview === 0) ? 'animate-pulse-slow' : '';
                 
-                let statBadges = '';
-                if(toReview > 0) statBadges += `<span class="bg-duo-bg border border-duo-red text-duo-red px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-fire mr-1"></i> Do powtórki: ${toReview}</span>`;
-                if(unseen > 0) statBadges += `<span class="bg-duo-bg border border-duo-border text-duo-muted px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-inbox mr-1"></i> Nowe: ${unseen}</span>`;
+                if (total > 0 && mastered === total) { 
+                    activeStyle = styleGold;
+                    icon = 'fa-crown'; 
+                    pulseClass = ''; 
+                } 
+                else if (toReview > 0) { 
+                    activeStyle = styleDanger;
+                    icon = 'fa-dumbbell'; 
+                    pulseClass = 'animate-pulse-slow'; 
+                }
+
+                // Dodany przycisk edycji w dymku (ołówek)
+                const tooltipHtml = `
+                    <div class="absolute -top-[45px] bg-duo-surface border-2 border-duo-border rounded-xl px-4 py-1.5 shadow-lg whitespace-nowrap z-20 flex flex-col items-center cursor-pointer active:scale-95 transition hover:bg-duo-surface/80" onclick="openDeckOptions('${deck.id}')">
+                        <p class="text-white font-extrabold text-sm flex items-center gap-2 max-w-[200px] truncate">${escape(deck.title)} <i class="fa-solid fa-pen text-[10px] text-duo-muted"></i></p>
+                        <div class="absolute -bottom-1.5 w-3 h-3 bg-duo-surface border-b-2 border-r-2 border-duo-border rotate-45"></div>
+                    </div>`;
+                
+                let badge = '';
+                if(toReview > 0) badge = `<div class="absolute -top-1 -right-1 bg-white border-2 border-duo-bg w-7 h-7 rounded-full flex items-center justify-center text-duo-red font-black text-xs z-30 shadow-sm">${toReview}</div>`;
 
                 container.innerHTML += `
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-5 shadow-lg">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-xl font-extrabold text-white flex items-center">${escape(deck.title)}</h3>
-                            <button onclick="confirmDeleteDeck('${deck.id}')" class="text-duo-muted hover:text-duo-red p-1"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 mb-4 mt-1 flex-wrap">
-                            ${statBadges || '<span class="bg-duo-bg border border-duo-green text-duo-green px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i> Talia opanowana</span>'}
-                        </div>
-
-                        <div class="flex items-center gap-3 mb-5">
-                            <div class="progress-bar-bg flex-1"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
-                            <span class="text-xs font-bold text-duo-muted">${pct}% Opanowane</span>
-                        </div>
-                        <button onclick="promptStudyMode('${deck.id}')" class="btn-3d btn-primary w-full py-3.5 text-sm">ZACZNIJ LEKCJĘ</button>
+                    <div class="path-node-wrapper relative flex justify-center w-full mb-[50px] mt-2" style="transform: translateX(${offset}px)">
+                        ${tooltipHtml}
+                        <button onclick="promptStudyMode('${deck.id}')" class="node-circle ${activeStyle.bg} ${activeStyle.border}${pulseClass} text-white">
+                            <i class="fa-solid ${icon} text-4xl drop-shadow-md"></i>
+                            ${badge}
+                        </button>
                     </div>`;
             });
+
+            const addOffset = offsets[catDecks.length % offsets.length];
+            container.innerHTML += `
+                <div class="path-node-wrapper relative flex justify-center w-full mt-4 mb-20" style="transform: translateX(${addOffset}px)">
+                    <button onclick="openNewDeckModal()" class="node-circle bg-white border-gray-300 hover:bg-gray-100 transition active:scale-95 text-duo-blue">
+                        <i class="fa-solid fa-plus text-4xl"></i>
+                    </button>
+                </div>`;
+            
+            requestAnimationFrame(() => setTimeout(drawPath, 50));
         }
 
-        function promptNewDeck() {
-            showModal({ title: 'Nowa Talia', desc: 'Podaj nazwę dla nowego zbioru:', input: true, placeholder: 'np. Historia', cancel: true, onOk: (val) => {
-                if(val?.trim()) { decks.push({ id: 'd_'+Date.now(), title: val.trim(), cards: [] }); saveData(); renderDecks(); }
-            }});
-        }
-        function confirmDeleteDeck(id) {
-            showModal({ title: 'Usunąć talię?', desc: 'Fiszki z tej talii znikną na zawsze.', cancel: true, onOk: () => {
-                decks = decks.filter(d => d.id !== id); saveData(); renderDecks();
-            }});
-        }
-
-        // --- IMPORT & ADD ---
-        function populateAddSelect() {
-            const select = document.getElementById('quick-add-deck');
-            let html = `<option value="NEW_DECK">➕ Utwórz nową talię</option>`;
-            html += decks.map(d => `<option value="${d.id}">${escape(d.title)}</option>`).join('');
-            select.innerHTML = html;
-            if(decks.length > 0) select.value = decks[0].id;
-            else select.value = "NEW_DECK";
-            toggleNewDeckInput();
-        }
-        function toggleNewDeckInput() {
-            const select = document.getElementById('quick-add-deck');
-            const input = document.getElementById('new-deck-name');
-            if (select.value === 'NEW_DECK') input.classList.remove('hidden');
-            else input.classList.add('hidden');
-        }
-        
-        function resolveTargetDeck() {
-            let id = document.getElementById('quick-add-deck').value;
-            if(id === 'NEW_DECK') {
-                const title = document.getElementById('new-deck-name').value.trim();
-                if(!title) return null;
-                const newDeck = { id: 'd_'+Date.now(), title, cards: [] };
-                decks.unshift(newDeck);
-                id = newDeck.id;
+        function drawPath() {
+            const container = document.getElementById('view-home'); 
+            const svg = document.getElementById('path-svg'); 
+            const nodes = document.querySelectorAll('.path-node-wrapper .node-circle');
+            if(!container || !svg || nodes.length < 2) { if(svg) svg.innerHTML = ''; return; }
+            
+            let pathString = ''; 
+            const containerRect = container.getBoundingClientRect();
+            
+            for(let i = 0; i < nodes.length; i++) {
+                const rect = nodes[i].getBoundingClientRect();
+                const x = rect.left - containerRect.left + (rect.width / 2);
+                const y = rect.top - containerRect.top + (rect.height / 2) + container.scrollTop;
+                if (i === 0) pathString += `M ${x}${y} `;
+                else {
+                    const prevRect = nodes[i-1].getBoundingClientRect();
+                    const prevX = prevRect.left - containerRect.left + (prevRect.width / 2);
+                    const prevY = prevRect.top - containerRect.top + (prevRect.height / 2) + container.scrollTop;
+                    const cpY1 = prevY + (y - prevY) / 2; 
+                    const cpY2 = prevY + (y - prevY) / 2;
+                    pathString += `C ${prevX}${cpY1}, ${x}${cpY2}, ${x}${y} `;
+                }
             }
-            return id;
+            
+            svg.style.height = `${container.scrollHeight}px`;
+            svg.innerHTML = `
+                <path d="${pathString}" fill="none" stroke="#37464f" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="${pathString}" fill="none" stroke="#202f36" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+            `;
         }
 
-        function addSingleCard() {
-            const id = resolveTargetDeck();
-            const front = document.getElementById('add-front').value.trim();
-            const back = document.getElementById('add-back').value.trim();
+        // --- OPCJE, EDYCJA I TWORZENIE TALII ---
+        function openNewDeckModal() { document.getElementById('modal-new-deck-name').value = ''; document.getElementById('create-deck-modal').classList.remove('hidden'); }
+        function closeNewDeckModal() { document.getElementById('create-deck-modal').classList.add('hidden'); }
+        function submitNewDeck() { 
+            const title = document.getElementById('modal-new-deck-name').value.trim(); 
+            if(!title) return; 
+            decks.push({ id: generateId('d'), title: title, category: currentCategory, cards: [] }); 
+            saveData(); renderPath(); closeNewDeckModal(); 
+        }
+
+        // Nowe funkcje od Edycji Nazwy Talii i jej usuwania
+        function openDeckOptions(id) {
+            activeDeckForOptions = id;
+            const deck = decks.find(d => d.id === id);
+            if(deck) {
+                document.getElementById('deck-edit-name').value = deck.title;
+                document.getElementById('deck-options-modal').classList.remove('hidden');
+            }
+        }
+        function closeDeckOptions() {
+            document.getElementById('deck-options-modal').classList.add('hidden');
+            activeDeckForOptions = null;
+        }
+        function saveDeckName() {
+            const newName = document.getElementById('deck-edit-name').value.trim();
+            if(!newName) return showModal({title: 'Błąd', desc: 'Nazwa talii nie może być pusta.'});
             
-            if(!id) return showModal({title:'Błąd', desc:'Podaj nazwę nowej talii.'});
-            if(!front || !back) return showModal({title:'Błąd', desc:'Uzupełnij pojęcie i odpowiedź.'});
-            
-            decks.find(d => d.id === id).cards.push({ id: 'c_'+Date.now(), front, back, status: 0 });
+            const deck = decks.find(d => d.id === activeDeckForOptions);
+            if(deck) {
+                deck.title = newName;
+                saveData();
+                renderPath();
+            }
+            closeDeckOptions();
+        }
+        function confirmDeleteDeckBtn() {
+            showModal({ title: 'Potwierdzenie', desc: 'Na pewno usunąć tę talię i wszystkie jej fiszki?', cancel: true, onOk: () => { 
+                decks = decks.filter(d => d.id !== activeDeckForOptions); 
+                saveData(); 
+                renderPath(); 
+                closeDeckOptions(); 
+            }});
+        }
+
+        // --- ZARZĄDZANIE FISZKAMI (ZAKŁADKA ADD/IMPORT) ---
+        function populateAddSelect() { 
+            const select = document.getElementById('quick-add-deck'); 
+            let html = ``; 
+            const catDecks = decks.filter(d => (d.category || 'Inne') === currentCategory); 
+            catDecks.forEach(d => { html += `<option value="${d.id}">${escape(d.title)}</option>`; }); 
+            if(catDecks.length === 0) html = `<option value="">Brak talii w kategorii</option>`; 
+            select.innerHTML = html; 
+        }
+        function addSingleCard() { 
+            const id = document.getElementById('quick-add-deck').value; 
+            const front = document.getElementById('add-front').value.trim(); 
+            const back = document.getElementById('add-back').value.trim(); 
+            if(!id) return showModal({title:'Błąd', desc:'Najpierw utwórz talię w tej kategorii na ścieżce.'}); 
+            if(!front || !back) return showModal({title:'Błąd', desc:'Uzupełnij pojęcie i odpowiedź.'}); 
+            decks.find(d => d.id === id).cards.push({ id: generateId('c'), front, back, status: 0 }); 
             saveData(); 
-            
-            populateAddSelect(); 
-            document.getElementById('quick-add-deck').value = id; 
-            toggleNewDeckInput();
-            
-            document.getElementById('add-front').value = ''; document.getElementById('add-back').value = '';
-            showModal({title:'Dodano!', desc: 'Fiszka zapisana pomyślnie.'});
+            document.getElementById('add-front').value = ''; 
+            document.getElementById('add-back').value = ''; 
+            showModal({title:'Sukces', desc: 'Fiszka została pomyślnie dodana do talii.'}); 
         }
-
-        function generateAndCopyPrompt(type) {
-            const lang = document.getElementById('ai-lang').value;
-            let prompt = "";
-
-            if (type === 'text') {
-                const topic = document.getElementById('ai-topic').value.trim() || 'Słówka';
-                const count = document.getElementById('ai-count').value;
-                prompt = `Wygeneruj ${count} fiszek na temat: "${topic}". Język odpowiedzi: ${lang}. Zwróć WYŁĄCZNIE linie w formacie: Pojęcie | Odpowiedź. Zero dodatkowego tekstu.`;
-            } else if (type === 'vision') {
-                prompt = `Zanalizuj tekst z załączonego zdjęcia / skanu (notatki, podręcznik itp.). Wyciągnij z niego najważniejsze pojęcia i wygeneruj fiszki edukacyjne. Język odpowiedzi: ${lang}. Zwróć WYŁĄCZNIE linie w formacie: Pojęcie | Odpowiedź. Żadnych wstępów, komentarzy i formatowania Markdown. Zwróć sam tekst fiszek.`;
-            }
-            
-            navigator.clipboard.writeText(prompt);
-            showModal({ title: 'Skopiowano!', desc: 'Wklej prompt do ChatGPT/Claude' + (type === 'vision' ? ' i nie zapomnij dodać zdjęcia!' : '.') });
-        }
-
-        function importCards() {
-            const id = resolveTargetDeck();
-            const text = document.getElementById('import-text').value.trim();
-            
-            if(!id) return showModal({title:'Błąd', desc:'Podaj nazwę nowej talii.'});
-            if(!text) return showModal({title:'Błąd', desc:'Brak tekstu do importu.'});
-            
-            let added = 0; const deck = decks.find(d => d.id === id);
-            text.split('\n').forEach(line => {
-                if(line.trim() === '') return;
-                const parts = line.split('|');
+        function importCards() { 
+            const id = document.getElementById('quick-add-deck').value; 
+            const text = document.getElementById('import-text').value.trim(); 
+            if(!id || !text) return showModal({title:'Błąd', desc:'Wybierz talię i wklej tekst we właściwym formacie.'}); 
+            let added = 0; 
+            const deck = decks.find(d => d.id === id); 
+            text.split('\n').forEach(line => { 
+                if(line.trim() === '') return; 
+                const parts = line.split('|'); 
                 if(parts.length >= 2) { 
-                    deck.cards.push({ id: 'c_'+Date.now()+Math.random(), front: parts[0].trim().replace(/^[\d\.\-\*]+\s*/, ''), back: parts[1].trim(), status: 0 }); 
+                    // Usuwanie automatycznej numeracji (np. "1. ", "- ") na początku
+                    const cleanFront = parts[0].trim().replace(/^[\d\.\-\*]+\s*/, '');
+                    deck.cards.push({ id: generateId('c'), front: cleanFront, back: parts[1].trim(), status: 0 }); 
                     added++; 
                 }
-            });
+            }); 
             if(added > 0) { 
                 saveData(); 
-                populateAddSelect();
-                document.getElementById('quick-add-deck').value = id;
-                toggleNewDeckInput();
                 document.getElementById('import-text').value = ''; 
-                showModal({title:'Sukces', desc:`Dodano ${added} fiszek do talii.`}); 
-            } else {
-                showModal({title:'Błąd', desc:'Nie odnaleziono poprawnego formatu "Przód | Tył" w tekście.'}); 
+                showModal({title:'Sukces', desc:`Pomyślnie zaimportowano ${added} fiszek.`}); 
+            } else { 
+                showModal({title:'Błąd formatu', desc:'Upewnij się, że tekst jest w formacie "Przód | Tył". Brakujących separatorów "|".'}); 
+            } 
+        }
+        
+        // Funkcja kopiowania promtów z obsługą błędów (Gdy blokada schowka)
+        function generateAndCopyPrompt(type) { 
+            const lang = document.getElementById('ai-lang').value; 
+            let prompt = ""; 
+            if (type === 'text') { 
+                const topic = document.getElementById('ai-topic').value.trim() || 'Słówka'; 
+                const count = document.getElementById('ai-count').value; 
+                prompt = `Wygeneruj ${count} fiszek na temat: "${topic}". Język odpowiedzi: ${lang}. Zwróć WYŁĄCZNIE tekst w formacie: Pojęcie | Odpowiedź. Żadnych dodatkowych słów.`; 
+            } else if (type === 'vision') { 
+                prompt = `Zanalizuj tekst z tego zdjęcia. Wyciągnij z niego najważniejsze pojęcia i wygeneruj dla nich fiszki. Język odpowiedzi: ${lang}. Zwróć WYŁĄCZNIE format: Pojęcie | Odpowiedź.`; 
+            } 
+            
+            try {
+                navigator.clipboard.writeText(prompt).then(() => {
+                    showModal({ title: 'Skopiowano!', desc: 'Wklej teraz ten prompt do ChatGPT, a gotowy wynik wklej niżej w oknie importu aplikacji.' });
+                }).catch(err => {
+                    promptFallback(prompt); // Fallback jeśli przeglądarka zablokuje Clipboard API
+                });
+            } catch(e) {
+                promptFallback(prompt);
             }
+        }
+
+        function promptFallback(promptText) {
+            showModal({ title: 'Skopiuj ręcznie', desc: 'Twój system operacyjny wymusza ręczne skopiowanie tekstu. Skopiuj go stąd:', input: true });
+            document.getElementById('modal-input').value = promptText;
         }
 
         // --- PROFILE ---
-        function renderProfile() {
-            document.getElementById('profile-name-display').innerText = escape(stats.name || 'Uczeń');
+        function renderProfile() { document.getElementById('profile-name-display').innerText = escape(stats.name || 'Uczeń'); let totalCards = 0, masteredCards = 0; decks.forEach(d => { totalCards += d.cards.length; d.cards.forEach(c => { if (c.status === 3) masteredCards++; }); }); const pct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0; document.getElementById('stat-streak').innerText = stats.streak; document.getElementById('stat-xp').innerText = stats.xp; document.getElementById('stat-sessions').innerText = stats.sessions; document.getElementById('stat-mastery').innerText = `${pct}%`; }
+        function editProfileName() { showModal({ title: 'Zmień nazwę profilu', desc: '', input: true, cancel: true, onOk: (val) => { if(val?.trim()) { stats.name = val.trim(); saveData(); renderProfile(); } }}); }
+
+        // --- LOGIKA NAUKI (STUDY MODE) ---
+        function promptStudyMode(deckId) { const deck = decks.find(d => d.id === deckId); if(!deck || deck.cards.length === 0) return showModal({title: 'Talia jest pusta', desc: 'Aby rozpocząć lekcję, przejdź do panelu "Zarządzaj Talią" (ikona sztangi na dole) i dodaj tam fiszki.'}); const reviewCount = deck.cards.filter(c => c.status === 1 || c.status === 2).length; selectedDeckForStudy = deckId; if(reviewCount > 0) { document.getElementById('opt-all-count').innerText = `${deck.cards.length} fiszek w talii`; document.getElementById('opt-review-count').innerText = `${reviewCount} do poprawy`; document.getElementById('study-options-modal').classList.remove('hidden'); } else { startStudyMode('all'); } }
+        function closeStudyOptions() { document.getElementById('study-options-modal').classList.add('hidden'); }
+        
+        function startStudyMode(mode) { 
+            closeStudyOptions(); 
+            const deck = decks.find(d => d.id === selectedDeckForStudy); 
+            let cardsToPlay = [...deck.cards]; 
+            if (mode === 'review') cardsToPlay = cardsToPlay.filter(c => c.status === 1 || c.status === 2); 
             
-            let totalCards = 0;
-            let masteredCards = 0;
-            const probs = [];
+            // Losujemy kolejność fiszek na start
+            studyState = { deckId: deck.id, cards: cardsToPlay.sort(()=>Math.random()-0.5), currentIndex: 0, sessionXP: 0, sessionCorrect: 0, sessionTotal: cardsToPlay.length }; 
             
-            decks.forEach(d => {
-                totalCards += d.cards.length;
-                d.cards.forEach(c => {
-                    if (c.status === 3) masteredCards++;
-                    if (c.status === 1 || c.status === 2) probs.push({deck: d.title, ...c});
-                });
-            });
+            document.getElementById('global-header').classList.add('hidden'); 
+            document.getElementById('bottom-nav').classList.add('hidden'); 
+            document.getElementById('study-overlay').classList.remove('hidden'); 
+            renderStudyCard(); 
+        }
+        
+        function quitStudy() { showModal({ title: 'Przerwać lekcję?', desc: 'Jeśli teraz wyjdziesz, nie zapiszemy Twoich postępów i zebranego XP z tej sesji.', cancel: true, onOk: () => { document.getElementById('study-overlay').classList.add('hidden'); document.getElementById('global-header').classList.remove('hidden'); document.getElementById('bottom-nav').classList.remove('hidden'); switchTab('home'); }}); }
+        
+        function renderStudyCard() { 
+            isCardCheckable = true; 
+            document.getElementById('study-progress').style.width = `${(studyState.currentIndex / studyState.sessionTotal) * 100}%`; 
             
-            const totalMasteryPct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+            const flipper = document.querySelector('.flipper'); 
+            flipper.style.transition = 'none'; // Wylacza animacje, zapobiega odwrotnemu "flipowi"
+            document.getElementById('study-card').classList.remove('flipped'); 
+            document.getElementById('study-rating-drawer').classList.add('hidden'); 
             
-            document.getElementById('stat-streak').innerText = stats.streak;
-            document.getElementById('stat-xp').innerText = stats.xp;
-            document.getElementById('stat-sessions').innerText = stats.sessions;
-            document.getElementById('stat-mastery').innerText = `${totalMasteryPct}%`;
-
-            const cont = document.getElementById('problematic-words-list');
-            if(probs.length === 0) {
-                cont.innerHTML = `
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-xl p-5 text-center shadow-sm">
-                        <i class="fa-solid fa-check-circle text-3xl text-duo-green mb-2"></i>
-                        <p class="text-white font-extrabold text-sm">Brak trudnych słówek!</p>
-                        <p class="text-duo-muted text-xs font-bold mt-1">Materiał zrewidowany. Dobra robota.</p>
-                    </div>`;
-            } else {
-                cont.innerHTML = probs.map(c => `
-                    <div class="bg-duo-surface border-2 border-duo-border rounded-xl p-3 flex justify-between items-center shadow-sm">
-                        <div>
-                            <p class="font-extrabold text-white text-base leading-tight">${escape(c.front)}</p>
-                            <p class="text-duo-blue text-xs font-bold leading-tight mt-0.5">${escape(c.back)}</p>
-                        </div>
-                        <i class="fa-solid fa-fire text-duo-red"></i>
-                    </div>`).join('');
-            }
+            setTimeout(() => { 
+                const card = studyState.cards[studyState.currentIndex]; 
+                document.getElementById('study-front').innerText = card.front; 
+                document.getElementById('study-back').innerText = ''; 
+                flipper.style.transition = ''; // Przewraca normalny czas po restarcie CSS
+                document.getElementById('study-action-bar').classList.remove('hidden'); 
+            }, 20); 
         }
-        function editProfileName() {
-            showModal({ title: 'Nazwa profilu', desc: 'Wpisz swoje imię:', input: true, cancel: true, onOk: (val) => {
-                if(val?.trim()) { stats.name = val.trim(); saveData(); renderProfile(); }
-            }});
-        }
-        function exportDecks() {
-            const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(decks));
-            const a = document.createElement('a'); a.href = data; a.download = 'fiszki_eksport.json';
-            a.click();
-        }
-        function resetStats() {
-            showModal({ title: 'Ostrzeżenie', desc: 'Wyzerować wszystkie zdobyte XP i Passę?', cancel: true, onOk: () => {
-                stats = { name: stats.name, streak: 0, xp: 0, sessions: 0, lastDate: '' }; saveData(); updateHeaderUI(); renderProfile();
-            }});
-        }
-
-        // --- STUDY MODES ---
-        function promptStudyMode(deckId) {
-            const deck = decks.find(d => d.id === deckId);
-            if(!deck || deck.cards.length === 0) return showModal({title: 'Pusto', desc: 'Dodaj fiszki do talii, aby rozpocząć.'});
+        
+        function revealAnswer() { 
+            if(!isCardCheckable) return; 
+            isCardCheckable = false; 
+            document.getElementById('study-back').innerText = studyState.cards[studyState.currentIndex].back; 
+            document.getElementById('study-card').classList.add('flipped'); 
+            document.getElementById('study-action-bar').classList.add('hidden'); 
             
-            const reviewCount = deck.cards.filter(c => c.status === 1 || c.status === 2).length;
-            selectedDeckForStudy = deckId;
+            const drawer = document.getElementById('study-rating-drawer'); 
+            drawer.classList.remove('hidden'); 
+            drawer.classList.add('animate-slide-up'); 
+        }
+        
+        function rateCard(rating) { 
+            try { 
+                studyState.sessionXP += (rating === 3 ? 15 : rating === 2 ? 10 : 5); 
+                if(rating > 1) studyState.sessionCorrect++; 
+                
+                const deck = decks.find(d => d.id === studyState.deckId); 
+                if(deck) { 
+                    const orig = deck.cards.find(c => c.id === studyState.cards[studyState.currentIndex].id); 
+                    if(orig) orig.status = rating; 
+                } 
+            } catch(e) {} 
             
-            if(reviewCount > 0) {
-                document.getElementById('opt-all-count').innerText = `${deck.cards.length} fiszek`;
-                document.getElementById('opt-review-count').innerText = `${reviewCount} do poprawy`;
-                document.getElementById('study-options-modal').classList.remove('hidden');
-            } else {
-                startStudyMode('all'); 
-            }
-        }
-
-        function closeStudyOptions() {
-            document.getElementById('study-options-modal').classList.add('hidden');
-        }
-
-        function startStudyMode(mode) {
-            closeStudyOptions();
-            const deck = decks.find(d => d.id === selectedDeckForStudy);
-            let cardsToPlay = [...deck.cards];
+            studyState.currentIndex++; 
             
-            if (mode === 'review') {
-                cardsToPlay = cardsToPlay.filter(c => c.status === 1 || c.status === 2);
-            }
+            if(studyState.currentIndex >= studyState.sessionTotal) finishSession(); 
+            else renderStudyCard(); 
+        }
+        
+        function finishSession() { 
+            stats.xp += studyState.sessionXP; 
+            stats.sessions++; 
+            const today = new Date().toISOString().split('T')[0]; 
+            if(stats.lastDate !== today) { 
+                stats.streak++; 
+                stats.lastDate = today; 
+            } 
+            saveData(); 
+            updateHeaderUI(); 
             
-            studyState = { deckId: deck.id, cards: cardsToPlay.sort(()=>Math.random()-0.5), currentIndex: 0, sessionXP: 0, sessionCorrect: 0 };
-            document.getElementById('global-header').classList.add('hidden'); document.getElementById('bottom-nav').classList.add('hidden');
-            document.getElementById('study-overlay').classList.remove('hidden');
-            renderStudyCard();
+            document.getElementById('study-progress').style.width = '100%'; 
+            document.getElementById('study-overlay').classList.add('hidden'); 
+            document.getElementById('lesson-complete-overlay').classList.remove('hidden'); 
+            document.getElementById('complete-xp').innerText = `+${studyState.sessionXP}`; 
+            document.getElementById('complete-acc').innerText = `${Math.round((studyState.sessionCorrect / studyState.sessionTotal)*100)}%`; 
+        }
+        
+        function closeLessonComplete() { 
+            document.getElementById('lesson-complete-overlay').classList.add('hidden'); 
+            document.getElementById('global-header').classList.remove('hidden'); 
+            document.getElementById('bottom-nav').classList.remove('hidden'); 
+            switchTab('home'); 
         }
 
-        function quitStudy() {
-            showModal({ title: 'Wyjście', desc: 'Przerwać lekcję? Nie zapiszemy tej sesji.', cancel: true, onOk: () => {
-                document.getElementById('study-overlay').classList.add('hidden'); document.getElementById('global-header').classList.remove('hidden');
-                document.getElementById('bottom-nav').classList.remove('hidden'); switchTab('home');
-            }});
-        }
-
-        function renderStudyCard() {
-            isCardCheckable = true;
-            document.getElementById('study-card').classList.remove('flipped');
-            const card = studyState.cards[studyState.currentIndex];
-            document.getElementById('study-progress').style.width = `${(studyState.currentIndex/studyState.cards.length)*100}%`;
-            document.getElementById('study-front').innerText = card.front;
-            document.getElementById('study-back').innerText = card.back;
-            document.getElementById('study-action-bar').classList.remove('hidden');
-            document.getElementById('study-rating-drawer').classList.add('hidden');
-            document.getElementById('study-rating-drawer').classList.remove('animate-slide-up');
-        }
-
-        function revealAnswer() {
-            if(!isCardCheckable) return;
-            isCardCheckable = false;
-            document.getElementById('study-card').classList.add('flipped');
-            document.getElementById('study-action-bar').classList.add('hidden');
-            const drawer = document.getElementById('study-rating-drawer');
-            drawer.classList.remove('hidden'); void drawer.offsetWidth; drawer.classList.add('animate-slide-up');
-        }
-
-        function rateCard(rating) {
-            studyState.sessionXP += (rating===3?15:rating===2?10:5); if(rating>1) studyState.sessionCorrect++;
-            const orig = decks.find(d=>d.id===studyState.deckId).cards.find(c=>c.id===studyState.cards[studyState.currentIndex].id);
-            if(orig) orig.status = rating;
-            
-            studyState.currentIndex++;
-            if(studyState.currentIndex >= studyState.cards.length) finishSession(); else renderStudyCard();
-        }
-
-        function finishSession() {
-            stats.xp += studyState.sessionXP; stats.sessions++;
-            const today = new Date().toISOString().split('T')[0];
-            let streakAnim = false; if(stats.lastDate !== today) { stats.streak++; stats.lastDate = today; streakAnim = true; }
-            saveData(); updateHeaderUI();
-            
-            document.getElementById('study-progress').style.width = '100%'; document.getElementById('study-overlay').classList.add('hidden');
-            document.getElementById('lesson-complete-overlay').classList.remove('hidden');
-            document.getElementById('complete-xp').innerText = `+${studyState.sessionXP}`; document.getElementById('complete-streak-text').innerText = `${stats.streak} Dni`;
-            
-            const icon = document.getElementById('complete-streak-icon'); icon.classList.remove('animate-streak-pop');
-            if(streakAnim) { void icon.offsetWidth; icon.classList.add('animate-streak-pop'); }
-        }
-
-        function closeLessonComplete() {
-            document.getElementById('lesson-complete-overlay').classList.add('hidden'); document.getElementById('global-header').classList.remove('hidden');
-            document.getElementById('bottom-nav').classList.remove('hidden'); renderDecks();
-        }
-
-        // --- PWA LOGIC ---
-        function checkPwaBanner() {
-            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-            const isDismissed = localStorage.getItem('duo_fiszki_pwa_dismissed');
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-            if (!isStandalone && !isDismissed && isMobile) {
-                const banner = document.getElementById('pwa-install-banner');
-                const instructions = document.getElementById('pwa-instructions');
-                const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-                if (isiOS) {
-                    instructions.innerHTML = `Kliknij ikonę udostępniania <i class="fa-solid fa-arrow-up-from-bracket text-duo-blue mx-1"></i> na dole ekranu, a następnie <strong>"Do ekranu początkowego"</strong>.`;
-                } else {
-                    instructions.innerHTML = `Kliknij menu przeglądarki <i class="fa-solid fa-ellipsis-vertical text-duo-blue mx-1"></i> i wybierz <strong>"Dodaj do ekranu głównego"</strong>.`;
-                }
-                banner.classList.remove('hidden');
-            }
-        }
-
-        function dismissPwaBanner() {
-            document.getElementById('pwa-install-banner').classList.add('hidden');
-            localStorage.setItem('duo_fiszki_pwa_dismissed', 'true');
-        }
-
-        // --- SHARED MODAL LOGIC ---
+        // --- GŁÓWNY MODAL (Używany uniwersalnie do błędów/pytań) ---
         let modalOkCallback = null;
-        function showModal(opts) {
-            document.getElementById('modal-title').innerText = opts.title; document.getElementById('modal-desc').innerText = opts.desc;
-            const inputWrap = document.getElementById('modal-input-wrapper'), input = document.getElementById('modal-input'), cancelBtn = document.getElementById('modal-btn-cancel');
-            if(opts.input) { inputWrap.classList.remove('hidden'); input.value = ''; input.placeholder = opts.placeholder || ''; } else inputWrap.classList.add('hidden');
-            if(opts.cancel) { cancelBtn.classList.remove('hidden'); cancelBtn.onclick = hideModal; } else cancelBtn.classList.add('hidden');
-            modalOkCallback = opts.onOk;
-            document.getElementById('modal-btn-ok').onclick = () => { if(modalOkCallback) modalOkCallback(opts.input?input.value:null); hideModal(); };
-            document.getElementById('custom-modal').classList.remove('hidden'); if(opts.input) setTimeout(()=>input.focus(), 100);
+        function showModal(opts) { 
+            document.getElementById('modal-title').innerText = opts.title; 
+            document.getElementById('modal-desc').innerText = opts.desc; 
+            
+            const inputWrap = document.getElementById('modal-input-wrapper'), 
+                  input = document.getElementById('modal-input'), 
+                  cancelBtn = document.getElementById('modal-btn-cancel'); 
+                  
+            if(opts.input) { 
+                inputWrap.classList.remove('hidden'); 
+                input.value = ''; 
+                input.placeholder = opts.placeholder || ''; 
+            } else {
+                inputWrap.classList.add('hidden'); 
+            }
+            
+            if(opts.cancel) { 
+                cancelBtn.classList.remove('hidden'); 
+                cancelBtn.onclick = hideModal; 
+            } else {
+                cancelBtn.classList.add('hidden'); 
+            }
+            
+            modalOkCallback = opts.onOk; 
+            
+            document.getElementById('modal-btn-ok').onclick = () => { 
+                if(modalOkCallback) modalOkCallback(opts.input ? input.value : null); 
+                hideModal(); 
+            }; 
+            
+            document.getElementById('custom-modal').classList.remove('hidden'); 
+            if(opts.input) setTimeout(() => input.focus(), 100); 
         }
-        function hideModal() { document.getElementById('custom-modal').classList.add('hidden'); }
-        function escape(str) { return String(str||'').replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        
+        function hideModal() { 
+            document.getElementById('custom-modal').classList.add('hidden'); 
+            modalOkCallback = null; // Czyszczenie odniesienia dla zasobów pamięci
+        }
     </script>
 </body>
 </html>
