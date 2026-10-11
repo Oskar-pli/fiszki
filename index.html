@@ -1,1262 +1,748 @@
 <!DOCTYPE html>
-<html lang="pl" class="dark h-full">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fiszki — Minimalistyczna Aplikacja do Nauki</title>
+    <title>Fiszki — Ucz się skutecznie</title>
     
-    <!-- PWA Meta Tags -->
+    <!-- PWA Meta -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Fiszki">
-    <meta name="theme-color" content="#06080d">
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZpc3praSIsCiAgInNob3J0X25hbWUiOiAiRmlzemtpIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwNjA4MGQiLAogICJ0aGVtZV9jb2xvciI6ICIjMDYwODBkIgp9">
+    <meta name="theme-color" content="#131f24">
 
-    <!-- Tailwind CSS CDN -->
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        dark: {
-                            900: '#06080d',
-                            800: '#0b0f17',
-                            700: '#121824',
-                            600: '#1a2332',
-                            border: '#202b3c'
+                        duo: {
+                            bg: '#131f24',
+                            surface: '#202f36',
+                            border: '#37464f',
+                            green: '#58cc02',
+                            red: '#ff4b4b',
+                            blue: '#1cb0f6',
+                            blueDark: '#1899d6',
+                            yellow: '#ffc800',
+                            text: '#ffffff',
+                            muted: '#afafaf'
                         }
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
+                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
+                    animation: {
+                        'bounce-in': 'bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'streak-pop': 'streakPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    },
+                    keyframes: {
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)' },
+                            '100%': { transform: 'translateY(0)' }
+                        },
+                        streakPop: {
+                            '0%': { transform: 'scale(1) rotate(0deg)' },
+                            '40%': { transform: 'scale(1.7) rotate(-10deg)', color: '#ffc800' },
+                            '60%': { transform: 'scale(1.7) rotate(10deg)' },
+                            '100%': { transform: 'scale(1) rotate(0deg)' }
+                        }
                     }
                 }
             }
         }
     </script>
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #06080d;
-            color: #f3f4f6;
-            touch-action: manipulation;
+        * { -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background-color: #131f24; color: #ffffff; overscroll-behavior-y: none; }
+        
+        /* 3D Button Physics */
+        .btn-3d {
+            border-radius: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom-width: 4px;
+            transition: transform 0.1s, border-bottom-width 0.1s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
         }
-        .perspective-1000 { perspective: 1000px; }
-        .transform-style-3d {
-            transform-style: preserve-3d;
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        .btn-3d:active { border-bottom-width: 0px; transform: translateY(4px); }
+        
+        .btn-primary { background-color: #1cb0f6; border-color: #1899d6; color: white; }
+        .btn-primary:hover { background-color: #1490cc; }
+        .btn-danger { background-color: #ff4b4b; border-color: #ea2b2b; color: white; }
+        .btn-secondary { background-color: #58cc02; border-color: #58a700; color: white; }
+        .btn-warning { background-color: #ffc800; border-color: #e5b400; color: #131f24; }
+        .btn-surface { background-color: #202f36; border-color: #131f24; color: #1cb0f6; border: 2px solid #37464f; border-bottom-width: 4px; }
+        
+        .duo-input {
+            background-color: #202f36; border: 2px solid #37464f; border-radius: 16px;
+            color: white; padding: 12px 16px; font-weight: 600; transition: border-color 0.2s;
         }
-        .backface-hidden {
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
+        .duo-input:focus { border-color: #1cb0f6; }
+
+        /* Progress Bar */
+        .progress-bar-bg { background-color: #37464f; border-radius: 999px; overflow: hidden; height: 16px; width: 100%; position: relative; }
+        .progress-bar-fill { background-color: #1cb0f6; height: 100%; border-radius: 999px; transition: width 0.4s ease; position: relative; }
+        .progress-bar-fill::after {
+            content: ''; position: absolute; top: 4px; left: 8px; right: 8px; height: 4px;
+            background-color: rgba(255,255,255,0.25); border-radius: 4px;
         }
-        .rotate-y-180 { transform: rotateY(180deg); }
-        .card-swipe-left {
-            transform: translateX(-120%) rotate(-12deg) !important;
-            opacity: 0;
-            transition: transform 0.25s ease, opacity 0.25s ease;
+
+        /* 3D Card Flip Animation */
+        .flip-container { perspective: 1000px; width: 100%; height: 280px; }
+        .flipper { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+        .flipped .flipper { transform: rotateY(180deg); }
+        .front-face, .back-face { 
+            backface-visibility: hidden; position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; 
+            background-color: #202f36; border: 2px solid #37464f; border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
-        .card-swipe-right {
-            transform: translateX(120%) rotate(12deg) !important;
-            opacity: 0;
-            transition: transform 0.25s ease, opacity 0.25s ease;
-        }
+        .back-face { transform: rotateY(180deg); border-color: #1cb0f6; background-color: #18242a; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #37464f; border-radius: 10px; }
     </style>
 </head>
-<body class="h-full flex flex-col justify-between overflow-x-hidden antialiased">
+<body class="h-screen flex flex-col antialiased">
 
-    <!-- HEADER -->
-    <header class="border-b border-dark-border/80 bg-dark-800/90 backdrop-blur-md sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('decks')">
-                <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg">
-                    🐟
-                </div>
-                <h1 class="text-base font-bold text-white tracking-tight">Fiszki</h1>
+    <!-- GLOBAL HEADER -->
+    <header id="global-header" class="flex items-center justify-between px-4 py-3 bg-duo-bg border-b border-duo-border z-40 sticky top-0">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('home')">
+            <i class="fa-solid fa-feather-pointed text-duo-blue text-2xl"></i>
+            <h1 class="text-xl font-extrabold text-white tracking-wide">fiszki</h1>
+        </div>
+        <div class="flex items-center gap-4 font-bold text-sm">
+            <div class="flex items-center gap-1.5 text-duo-yellow">
+                <i class="fa-solid fa-fire text-lg"></i><span id="header-streak">0</span>
             </div>
-
-            <!-- Desktop Navigation -->
-            <nav class="hidden md:flex items-center space-x-1">
-                <button id="nav-decks" onclick="switchTab('decks')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-white bg-dark-700 border border-dark-border">
-                    <i class="fa-solid fa-layer-group mr-1.5"></i>Talie (<span id="deck-count-badge">0</span>)
-                </button>
-                <button id="nav-stats" onclick="switchTab('stats')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
-                    <i class="fa-solid fa-chart-line mr-1.5"></i>Statystyki
-                </button>
-                <button id="nav-generator" onclick="switchTab('generator')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
-                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Generator AI
-                </button>
-                <button id="nav-import" onclick="switchTab('import')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-400 hover:text-white hover:bg-dark-700/50">
-                    <i class="fa-solid fa-file-import mr-1.5"></i>Wklej Odpowiedź
-                </button>
-            </nav>
-
-            <button onclick="promptCreateDeckModal()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-lg shadow-blue-500/10">
-                <i class="fa-solid fa-plus text-[10px]"></i> <span class="hidden sm:inline">Nowa Talia</span>
-            </button>
+            <div class="flex items-center gap-1.5 text-duo-blue">
+                <i class="fa-solid fa-bolt text-lg"></i><span id="header-xp">0</span>
+            </div>
         </div>
     </header>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 pb-32 md:pb-8">
+    <main class="flex-1 overflow-y-auto pb-24 md:pb-6 relative w-full max-w-2xl mx-auto">
+        <!-- HOME (DECKS) -->
+        <section id="view-home" class="p-4 space-y-6">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-2xl font-extrabold text-white">Twoje Talie</h2>
+                <button onclick="promptNewDeck()" class="text-duo-blue font-bold uppercase tracking-wider text-sm"><i class="fa-solid fa-plus mr-1"></i> Nowa</button>
+            </div>
+            <div id="decks-container" class="space-y-5"></div>
+        </section>
 
-        <!-- TAB 1: DECKS GALLERY & IN-APP FAST INPUT -->
-        <section id="tab-decks" class="space-y-4">
+        <!-- ADD/IMPORT -->
+        <section id="view-add" class="hidden p-4 space-y-6">
+            <h2 class="text-2xl font-extrabold text-white text-center">Zarządzaj materiałem</h2>
             
-            <!-- FAST IN-APP INPUT PANEL -->
-            <div class="bg-dark-800 border border-dark-border/80 rounded-xl p-4 shadow-xl space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt"></i> Szybkie dodawanie fiszki
-                    </span>
-                    <select id="quick-add-target-deck" class="bg-dark-900 border border-dark-border rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500 max-w-[180px] truncate">
-                        <!-- Dynamic options -->
+            <!-- DOCELOWA TALIA -->
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider">
+                    <i class="fa-solid fa-folder-open text-duo-yellow mr-1"></i> Wybierz lub utwórz talię
+                </h3>
+                <select id="quick-add-deck" class="duo-input w-full appearance-none mb-2" onchange="toggleNewDeckInput()"></select>
+                <input type="text" id="new-deck-name" placeholder="Wpisz nazwę nowej talii..." class="duo-input w-full hidden border-duo-yellow focus:border-duo-yellow text-white">
+            </div>
+
+            <!-- MANUAL ADD -->
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-bolt text-duo-blue mr-1"></i> Dodaj pojedynczą fiszkę</h3>
+                <div class="space-y-3 pt-2">
+                    <input type="text" id="add-front" placeholder="Przód (np. Apple)" class="duo-input w-full text-lg">
+                    <input type="text" id="add-back" placeholder="Tył (np. Jabłko)" class="duo-input w-full text-lg">
+                </div>
+                <button onclick="addSingleCard()" class="btn-3d btn-primary w-full py-3.5 text-[15px] mt-2">Dodaj Fiszkę</button>
+            </div>
+            
+            <!-- AI GENERATOR -->
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-wand-magic-sparkles text-duo-green mr-1"></i> 1. Wygeneruj z AI</h3>
+                <input type="text" id="ai-topic" placeholder="Wpisz temat (np. Czasowniki nieregularne)" class="duo-input w-full text-sm">
+                
+                <div class="flex gap-3 mt-2">
+                    <input type="number" id="ai-count" value="15" min="1" max="100" class="duo-input w-24 text-sm text-center">
+                    <select id="ai-lang" class="duo-input flex-1 text-sm appearance-none">
+                        <option>Angielski</option><option>Niemiecki</option><option>Hiszpański</option><option>Polski</option>
                     </select>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div>
-                        <label class="block text-[10px] font-mono text-gray-400 uppercase mb-1">Przód (Pojęcie)</label>
-                        <input type="text" id="quick-add-front" oninput="updateLivePreview()" placeholder="np. Resilience" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-mono text-gray-400 uppercase mb-1">Tył (Odpowiedź)</label>
-                        <input type="text" id="quick-add-back" oninput="updateLivePreview()" placeholder="np. Odporność, elastyczność" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
-                    </div>
+                <div class="grid grid-cols-2 gap-3 mt-3">
+                    <button onclick="generateAndCopyPrompt('text')" class="btn-3d btn-surface py-3 text-[11px]"><i class="fa-solid fa-keyboard"></i> Z Tematu</button>
+                    <button onclick="generateAndCopyPrompt('vision')" class="btn-3d btn-secondary py-3 text-[11px]"><i class="fa-solid fa-camera"></i> Ze Zdjęcia</button>
                 </div>
-
-                <div>
-                    <label class="block text-[10px] font-mono text-gray-400 uppercase mb-1">Notatka / Przykład użycia (Opcjonalnie)</label>
-                    <input type="text" id="quick-add-example" oninput="updateLivePreview()" onkeydown="handleQuickAddKeydown(event)" placeholder="np. Build emotional resilience in difficult times." class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition">
-                </div>
-
-                <!-- Live Preview Container -->
-                <div id="live-card-preview" class="hidden pt-2 border-t border-dark-border/40">
-                    <div class="bg-dark-900/80 border border-blue-500/30 rounded-lg p-3 text-xs flex items-center justify-between gap-2">
-                        <div class="space-y-1">
-                            <span class="text-[9px] text-blue-400 font-mono uppercase">Podgląd na żywo:</span>
-                            <p class="font-bold text-white"><span id="preview-front" class="text-blue-300">...</span> $\rightarrow$ <span id="preview-back" class="text-gray-200">...</span></p>
-                            <p id="preview-example-container" class="text-[11px] text-gray-400 italic hidden">"<span id="preview-example"></span>"</p>
-                        </div>
-                        <span class="text-[10px] text-gray-500 font-mono shrink-0">Wciśnij [Enter] ↵</span>
-                    </div>
-                </div>
-
-                <button onclick="quickAddCard()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg py-2 text-xs transition active:scale-98 flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10">
-                    <i class="fa-solid fa-plus text-[10px]"></i> Dodaj Fiszkę do Talii
-                </button>
             </div>
-
-            <div class="flex items-center justify-between border-b border-dark-border/40 pb-2 pt-2">
-                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Twoje Talie</h2>
-                <input type="text" id="search-decks" oninput="renderDecks()" placeholder="Szukaj..." class="bg-dark-800 border border-dark-border rounded-lg px-2.5 py-1 text-xs text-gray-200 focus:outline-none focus:border-blue-500 w-36">
-            </div>
-
-            <!-- DECKS GRID -->
-            <div id="decks-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <!-- Dynamically Populated -->
+            
+            <!-- AI IMPORT -->
+            <div class="bg-duo-surface p-5 rounded-2xl border-2 border-duo-border space-y-4">
+                <h3 class="font-bold text-duo-muted uppercase text-xs tracking-wider"><i class="fa-solid fa-file-import text-duo-blue mr-1"></i> 2. Wklej Wynik AI</h3>
+                <p class="text-[11px] text-duo-muted font-bold leading-relaxed">Format: <span class="text-white">Pojęcie | Odpowiedź</span></p>
+                <textarea id="import-text" rows="5" placeholder="Wklej tu odpowiedź od AI..." class="duo-input w-full text-sm font-mono"></textarea>
+                <button onclick="importCards()" class="btn-3d btn-primary w-full py-3.5 text-[15px]">Zaimportuj Do Talii</button>
             </div>
         </section>
 
-        <!-- TAB 2: LOCAL USER STATS PANEL -->
-        <section id="tab-stats" class="hidden max-w-xl mx-auto space-y-4">
-            <div class="border-b border-dark-border/50 pb-2 flex items-center justify-between">
-                <div>
-                    <h2 class="text-sm font-bold text-white">Twój Profil i Statystyki</h2>
-                    <p class="text-xs text-gray-400">Dane zapisane lokalnie w pamięci tego urządzenia.</p>
-                </div>
-                <span id="user-profile-id" class="text-[10px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-md">ID: ---</span>
-            </div>
-
-            <!-- Overview Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
-                    <span class="text-[10px] font-mono text-gray-400 uppercase">Ukończone sesje</span>
-                    <p id="stat-sessions" class="text-xl font-bold text-white">0</p>
-                </div>
-                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
-                    <span class="text-[10px] font-mono text-gray-400 uppercase">Przejrzane karty</span>
-                    <p id="stat-reviewed" class="text-xl font-bold text-blue-400">0</p>
-                </div>
-                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
-                    <span class="text-[10px] font-mono text-gray-400 uppercase">Skuteczność</span>
-                    <p id="stat-accuracy" class="text-xl font-bold text-green-400">0%</p>
-                </div>
-                <div class="bg-dark-800 border border-dark-border rounded-xl p-3 text-center space-y-1">
-                    <span class="text-[10px] font-mono text-gray-400 uppercase">Seria dni (Streak)</span>
-                    <p id="stat-streak" class="text-xl font-bold text-amber-400">0 🔥</p>
+        <!-- PROFILE (REDESIGNED INTUITIVE STATS) -->
+        <section id="view-profile" class="hidden p-4 space-y-6">
+            <div class="flex items-center justify-between pb-6 border-b-2 border-duo-border">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center text-3xl shadow-sm">🧠</div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-2xl font-extrabold text-white" id="profile-name-display">Uczeń</h2>
+                            <button onclick="editProfileName()" class="text-duo-muted hover:text-white transition"><i class="fa-solid fa-pen text-sm"></i></button>
+                        </div>
+                        <p class="text-duo-blue font-bold text-sm">Gotowy do nauki</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Rating Breakdown -->
-            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 space-y-3">
-                <h3 class="text-xs font-bold text-gray-300 uppercase">Rozkład ocenianiach odpowiedzi</h3>
-                <div class="space-y-2">
-                    <div>
-                        <div class="flex justify-between text-[11px] text-gray-400 mb-1">
-                            <span>Łatwe (Opanowane)</span>
-                            <span id="stat-easy-count" class="text-green-400 font-bold">0</span>
-                        </div>
-                        <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden border border-dark-border">
-                            <div id="stat-easy-bar" class="bg-green-500 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-[11px] text-gray-400 mb-1">
-                            <span>Średnie (Do powtórki)</span>
-                            <span id="stat-medium-count" class="text-amber-400 font-bold">0</span>
-                        </div>
-                        <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden border border-dark-border">
-                            <div id="stat-medium-bar" class="bg-amber-500 h-full w-0 transition-all duration-300"></div>
+            <!-- Intuitive Stats Grid -->
+            <div>
+                <h3 class="text-lg font-extrabold text-white mb-3">Twoje osiągnięcia</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- XP -->
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                        <i class="fa-solid fa-bolt text-3xl text-duo-blue w-8 text-center"></i>
+                        <div>
+                            <div class="text-2xl font-extrabold text-white" id="stat-xp">0</div>
+                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Punkty XP</div>
                         </div>
                     </div>
-
-                    <div>
-                        <div class="flex justify-between text-[11px] text-gray-400 mb-1">
-                            <span>Trudne (Nie umiem)</span>
-                            <span id="stat-hard-count" class="text-rose-400 font-bold">0</span>
+                    <!-- Streak -->
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                        <i class="fa-solid fa-fire text-3xl text-duo-yellow w-8 text-center"></i>
+                        <div>
+                            <div class="text-2xl font-extrabold text-white" id="stat-streak">0</div>
+                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Dni z rzędu</div>
                         </div>
-                        <div class="w-full bg-dark-900 h-1.5 rounded-full overflow-hidden border border-dark-border">
-                            <div id="stat-hard-bar" class="bg-rose-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                    <!-- Total Mastery -->
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                        <i class="fa-solid fa-brain text-3xl text-duo-green w-8 text-center"></i>
+                        <div>
+                            <div class="text-2xl font-extrabold text-white" id="stat-mastery">0%</div>
+                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Opanowany materiał</div>
+                        </div>
+                    </div>
+                    <!-- Sessions -->
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                        <i class="fa-solid fa-trophy text-3xl text-duo-yellow w-8 text-center" style="color: #e5b400"></i>
+                        <div>
+                            <div class="text-2xl font-extrabold text-white" id="stat-sessions">0</div>
+                            <div class="text-[10px] font-bold text-duo-muted uppercase tracking-wider">Ukończone lekcje</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="pt-2 flex justify-end">
-                <button onclick="resetProfileStats()" class="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-300 text-xs rounded-lg transition">
-                    <i class="fa-solid fa-rotate-left mr-1"></i> Zresetuj statystyki tego urządzenia
+            <!-- Redesigned Weak Points -->
+            <div class="pt-2">
+                <h3 class="text-lg font-extrabold text-white mb-3">Słabe punkty</h3>
+                <div id="problematic-words-list" class="space-y-3"></div>
+            </div>
+
+            <div class="pt-4 grid grid-cols-2 gap-3">
+                <button onclick="exportDecks()" class="text-duo-blue border-2 border-duo-blue rounded-xl font-bold uppercase tracking-wider text-xs text-center py-3 hover:bg-duo-blue/10">
+                    <i class="fa-solid fa-download mr-1"></i> Eksportuj Dane
+                </button>
+                <button onclick="resetStats()" class="text-duo-red border-2 border-duo-red rounded-xl font-bold uppercase tracking-wider text-xs text-center py-3 hover:bg-duo-red/10">
+                    <i class="fa-solid fa-trash mr-1"></i> Zresetuj Profil
                 </button>
             </div>
         </section>
-
-        <!-- TAB 3: PROMPT GENERATOR -->
-        <section id="tab-generator" class="hidden max-w-xl mx-auto space-y-4">
-            <div class="border-b border-dark-border/50 pb-2">
-                <h2 class="text-sm font-bold text-white">Generator Promptów dla AI</h2>
-                <p class="text-xs text-gray-400">Wybierz tryb tekstowy lub odczyt ze zdjęcia/skanu podręcznika.</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 bg-dark-800 p-1 rounded-xl border border-dark-border">
-                <button onclick="setGeneratorMode('text')" id="mode-btn-text" class="py-1.5 text-xs font-semibold rounded-lg bg-dark-700 text-white transition">Tekst / Temat</button>
-                <button onclick="setGeneratorMode('vision')" id="mode-btn-vision" class="py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition"><i class="fa-solid fa-camera mr-1"></i> Skan / Zdjęcie</button>
-            </div>
-
-            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 space-y-3">
-                <div id="gen-input-text-container">
-                    <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Temat lub słówka</label>
-                    <input type="text" id="prompt-topic" placeholder="np. Słówka C1 - Praca i Biznes" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                </div>
-
-                <div id="gen-input-vision-container" class="hidden">
-                    <p class="text-xs text-amber-400/90 bg-amber-950/30 border border-amber-800/40 p-2.5 rounded-lg leading-relaxed">
-                        <i class="fa-solid fa-circle-info mr-1"></i> Skopiuj poniższy prompt, otwórz ChatGPT lub Claude, załącz zdjęcie słówek i wklej polecenie.
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Liczba fiszek</label>
-                        <input type="number" id="prompt-count" value="15" min="3" max="100" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Język</label>
-                        <select id="prompt-lang" class="w-full bg-dark-900 border border-dark-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                            <option value="Polski">Polski</option>
-                            <option value="Angielski">Angielski</option>
-                            <option value="Niemiecki">Niemiecki</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button onclick="generateAIPrompt()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs transition active:scale-98">
-                    Generuj Prompt Anti-SLOP
-                </button>
-            </div>
-
-            <!-- Output Box -->
-            <div id="prompt-output-container" class="hidden bg-dark-800 border border-dark-border rounded-xl p-3.5 space-y-2.5">
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-mono font-semibold text-blue-400 uppercase">Gotowy Prompt</span>
-                    <button onclick="copyGeneratedPrompt()" id="copy-btn" class="px-2.5 py-1 bg-dark-700 hover:bg-dark-600 border border-dark-border text-xs text-gray-200 rounded transition">
-                        <i class="fa-regular fa-copy"></i> Kopiuj
-                    </button>
-                </div>
-                <pre id="prompt-output" class="bg-dark-900 p-3 rounded-lg text-xs font-mono text-gray-300 whitespace-pre-wrap border border-dark-border max-h-48 overflow-y-auto leading-relaxed select-all"></pre>
-            </div>
-        </section>
-
-        <!-- TAB 4: IMPORT RESPONSE -->
-        <section id="tab-import" class="hidden max-w-xl mx-auto space-y-4">
-            <div class="border-b border-dark-border/50 pb-2">
-                <h2 class="text-sm font-bold text-white">Wklej Odpowiedź z AI</h2>
-                <p class="text-xs text-gray-400">Wklej skopiowane hasła od AI. Wybierz czy utworzyć nową talię, czy dopisać do istniejącej.</p>
-            </div>
-
-            <div class="bg-dark-800 border border-dark-border rounded-xl p-4 space-y-3">
-                <div>
-                    <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Docelowa Talia</label>
-                    <select id="import-target-deck" onchange="toggleImportTitleInput()" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                        <option value="NEW">+ Utwórz Nową Talię</option>
-                        <!-- Dynamic options -->
-                    </select>
-                </div>
-
-                <div id="import-title-container">
-                    <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Nazwa Nowej Talii</label>
-                    <input type="text" id="import-deck-title" placeholder="np. Słówka ze zdjęcia #1" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-[11px] font-semibold text-gray-300 uppercase mb-1">Wygenerowany Tekst AI</label>
-                    <textarea id="import-raw-text" rows="6" placeholder="Wklej odpowiedź w formacie Przód | Tył..." class="w-full bg-dark-900 border border-dark-border rounded-lg p-3 text-xs font-mono text-gray-200 focus:outline-none focus:border-blue-500"></textarea>
-                </div>
-
-                <button onclick="parseAndCreateDeck()" class="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-semibold transition active:scale-98">
-                    Zapisz i Przejdź do Nauki
-                </button>
-            </div>
-        </section>
-
-        <!-- TAB 5: STUDY VIEW -->
-        <section id="tab-study" class="hidden max-w-sm mx-auto space-y-3">
-            <div class="flex items-center justify-between border-b border-dark-border/50 pb-2">
-                <button onclick="switchTab('decks')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
-                    <i class="fa-solid fa-arrow-left"></i> Wróć
-                </button>
-                <span id="study-deck-title" class="text-xs font-bold text-white truncate max-w-[150px]">Nazwa Talii</span>
-                <span id="study-progress-text" class="text-xs font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">1 / 10</span>
-            </div>
-
-            <div class="w-full bg-dark-800 rounded-full h-1 overflow-hidden border border-dark-border">
-                <div id="study-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
-            </div>
-
-            <!-- Card Flip Area -->
-            <div class="perspective-1000 w-full min-h-[280px] cursor-pointer my-2" onclick="flipCard()">
-                <div id="card-element" class="relative w-full h-full min-h-[280px] transform-style-3d rounded-2xl border border-dark-border bg-dark-800 p-5 flex flex-col justify-between shadow-xl">
-                    <!-- FRONT -->
-                    <div id="card-front" class="absolute inset-0 backface-hidden p-6 flex flex-col justify-between bg-dark-800 rounded-2xl border border-dark-border select-none">
-                        <span class="text-[9px] font-mono tracking-wider text-gray-500 uppercase">PYTANIE</span>
-                        <div class="my-auto text-center py-4">
-                            <h3 id="card-front-text" class="text-xl font-bold text-white leading-relaxed"></h3>
-                        </div>
-                        <span class="text-[10px] text-gray-500 text-center">Dotknij, aby obrócić</span>
-                    </div>
-
-                    <!-- BACK -->
-                    <div id="card-back" class="absolute inset-0 backface-hidden rotate-y-180 p-6 flex flex-col justify-between bg-dark-700 rounded-2xl border border-blue-500/30 select-none">
-                        <span class="text-[9px] font-mono tracking-wider text-blue-400 uppercase">ODPOWIEDŹ</span>
-                        <div class="my-auto text-center py-2 space-y-2 overflow-y-auto max-h-[180px]">
-                            <p id="card-back-text" class="text-base font-medium text-gray-100 leading-relaxed"></p>
-                            <p id="card-example-text" class="text-xs text-gray-400 italic hidden"></p>
-                        </div>
-                        <span class="text-[10px] text-gray-400 text-center">Oceń stopień zapamiętania</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Rating Controls -->
-            <div id="rating-controls" class="grid grid-cols-3 gap-2 pt-1">
-                <button onclick="rateCard(1)" class="py-2.5 px-1 bg-red-950/40 hover:bg-red-900/60 active:bg-red-900 border border-red-800/50 text-red-300 rounded-xl font-medium text-xs flex flex-col items-center justify-center">
-                    <span class="font-bold">1. Trudne</span>
-                </button>
-                <button onclick="rateCard(2)" class="py-2.5 px-1 bg-amber-950/40 hover:bg-amber-900/60 active:bg-amber-900 border border-amber-800/50 text-amber-300 rounded-xl font-medium text-xs flex flex-col items-center justify-center">
-                    <span class="font-bold">2. Średnie</span>
-                </button>
-                <button onclick="rateCard(3)" class="py-2.5 px-1 bg-green-950/40 hover:bg-green-900/60 active:bg-green-900 border border-green-800/50 text-green-300 rounded-xl font-medium text-xs flex flex-col items-center justify-center">
-                    <span class="font-bold">3. Łatwe</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- TAB 6: EDIT DECK -->
-        <section id="tab-edit" class="hidden max-w-xl mx-auto space-y-4">
-            <div class="flex items-center justify-between border-b border-dark-border/50 pb-2">
-                <button onclick="switchTab('decks')" class="text-xs text-gray-400 hover:text-white flex items-center gap-1">
-                    <i class="fa-solid fa-arrow-left"></i> Wróć
-                </button>
-                <h2 class="text-xs font-bold text-white">Edycja Talii</h2>
-                <div></div>
-            </div>
-
-            <div class="bg-dark-800 border border-dark-border rounded-xl p-3.5 space-y-2">
-                <label class="block text-[11px] font-semibold text-gray-300 uppercase">Tytuł Talii</label>
-                <input type="text" id="edit-deck-title" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-[11px] font-semibold text-gray-400 uppercase">Lista Fiszek</h3>
-                    <button onclick="addNewCardToEdit()" class="px-2 py-1 bg-dark-700 hover:bg-dark-600 border border-dark-border text-xs text-white rounded transition flex items-center gap-1">
-                        <i class="fa-solid fa-plus text-[10px]"></i> Dodaj
-                    </button>
-                </div>
-                <div id="edit-cards-container" class="space-y-2">
-                    <!-- Dynamic cards -->
-                </div>
-            </div>
-
-            <button onclick="saveDeckEdits()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition">
-                Zapisz Zmiany
-            </button>
-        </section>
-
     </main>
 
-    <!-- MOBILE BOTTOM NAVBAR -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 border-t border-dark-border bg-dark-800/95 backdrop-blur-md z-40 px-2 py-1.5">
-        <div class="grid grid-cols-4 gap-1 text-center">
-            <button onclick="switchTab('decks')" id="mob-nav-decks" class="py-1 flex flex-col items-center text-blue-400">
-                <i class="fa-solid fa-layer-group text-sm"></i>
-                <span class="text-[9px] mt-0.5">Talie</span>
-            </button>
-            <button onclick="switchTab('stats')" id="mob-nav-stats" class="py-1 flex flex-col items-center text-gray-400">
-                <i class="fa-solid fa-chart-line text-sm"></i>
-                <span class="text-[9px] mt-0.5">Profil</span>
-            </button>
-            <button onclick="switchTab('generator')" id="mob-nav-generator" class="py-1 flex flex-col items-center text-gray-400">
-                <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
-                <span class="text-[9px] mt-0.5">Prompt</span>
-            </button>
-            <button onclick="switchTab('import')" id="mob-nav-import" class="py-1 flex flex-col items-center text-gray-400">
-                <i class="fa-solid fa-file-import text-sm"></i>
-                <span class="text-[9px] mt-0.5">Import</span>
-            </button>
+    <!-- MOBILE NAV -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-duo-bg border-t-2 border-duo-border z-40 pb-safe">
+        <div class="max-w-2xl mx-auto flex justify-between items-center px-6 py-2">
+            <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center p-2 text-duo-blue transition"><i class="fa-solid fa-house text-2xl mb-1"></i></button>
+            <button onclick="switchTab('add')" id="nav-btn-add" class="flex flex-col items-center p-2 text-duo-muted hover:text-white transition"><i class="fa-solid fa-circle-plus text-2xl mb-1"></i></button>
+            <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center p-2 text-duo-muted hover:text-white transition"><i class="fa-solid fa-user text-2xl mb-1"></i></button>
+        </div>
+    </nav>
+
+    <!-- STUDY OVERLAY -->
+    <div id="study-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col">
+        <div class="flex items-center px-4 py-5 gap-4">
+            <button onclick="quitStudy()" class="text-duo-muted hover:text-white text-2xl font-bold p-2"><i class="fa-solid fa-xmark"></i></button>
+            <div class="progress-bar-bg"><div id="study-progress" class="progress-bar-fill" style="width: 0%"></div></div>
+        </div>
+
+        <!-- 3D Card Area -->
+        <div class="flex-1 flex flex-col justify-center items-center p-6 text-center">
+            <div class="flip-container cursor-pointer" id="study-card" onclick="if(isCardCheckable) revealAnswer()">
+                <div class="flipper">
+                    <!-- FRONT -->
+                    <div class="front-face">
+                        <h3 class="text-duo-muted font-bold uppercase tracking-wider mb-4 text-sm">Pojęcie</h3>
+                        <h2 id="study-front" class="text-4xl font-extrabold text-white leading-tight break-words w-full"></h2>
+                        <span class="mt-8 text-xs text-duo-muted font-bold"><i class="fa-solid fa-hand-pointer mr-1"></i> Dotknij by odwrócić</span>
+                    </div>
+                    <!-- BACK -->
+                    <div class="back-face">
+                        <h3 class="text-duo-blue font-bold uppercase tracking-wider mb-4 text-sm">Odpowiedź</h3>
+                        <h2 id="study-back" class="text-3xl font-extrabold text-white leading-tight break-words w-full text-duo-green"></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="study-action-bar" class="p-4 pb-8 border-t-2 border-duo-border bg-duo-bg">
+            <button onclick="revealAnswer()" class="btn-3d btn-primary w-full py-4 text-[16px]">SPRAWDŹ</button>
+        </div>
+
+        <!-- Rating Drawer -->
+        <div id="study-rating-drawer" class="hidden absolute bottom-0 left-0 right-0 bg-duo-surface border-t-2 border-duo-border rounded-t-3xl shadow-2xl animate-slide-up flex flex-col z-50">
+            <div class="p-6">
+                <h4 class="text-duo-muted font-bold text-xs uppercase tracking-wider mb-4 text-center">Oceń swoją pamięć</h4>
+                <div class="grid grid-cols-3 gap-3 pb-safe">
+                    <button onclick="rateCard(1)" class="btn-3d btn-danger py-4 flex flex-col gap-1 items-center"><span class="text-xs">TRUDNE</span></button>
+                    <button onclick="rateCard(2)" class="btn-3d btn-warning py-4 flex flex-col gap-1 items-center"><span class="text-xs">ŚREDNIE</span></button>
+                    <button onclick="rateCard(3)" class="btn-3d btn-secondary py-4 flex flex-col gap-1 items-center"><span class="text-xs">ŁATWE</span></button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- PWA INSTALL BANNER -->
-    <div id="pwa-install-banner" class="hidden fixed bottom-14 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-sm bg-dark-700/95 border border-blue-500/40 backdrop-blur-md p-3.5 rounded-xl shadow-2xl z-50 space-y-2">
-        <div class="flex items-start justify-between gap-2">
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded bg-blue-600/30 flex items-center justify-center text-blue-400 text-sm">🐟</div>
-                <div>
-                    <h4 class="text-xs font-bold text-white">Zainstaluj Fiszki</h4>
-                    <p class="text-[10px] text-gray-300 leading-tight">Dodaj aplikację do ekranu głównego telefonu.</p>
-                </div>
-            </div>
-            <button onclick="dismissPwaBanner()" class="text-gray-400 hover:text-white p-1">
-                <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-        </div>
-        <div id="pwa-instructions" class="text-[10px] text-gray-400 bg-dark-900/60 p-2 rounded border border-dark-border leading-relaxed">
-            <!-- Dynamic instructions per OS -->
-        </div>
-    </div>
-
-    <!-- IN-APP CUSTOM MODAL SYSTEM (REPLACES BROWSER ALERTS/PROMPTS) -->
-    <div id="custom-modal-backdrop" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-dark-800 border border-dark-border rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-            <div class="flex items-center gap-3">
-                <div id="modal-icon-container" class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-lg font-bold shrink-0">
-                    🐟
-                </div>
-                <div>
-                    <h3 id="modal-title" class="text-sm font-bold text-white">Tytuł Modala</h3>
-                    <p id="modal-subtitle" class="text-xs text-gray-400">Opis lub wiadomość dla użytkownika</p>
-                </div>
-            </div>
-
-            <!-- Optional Input Container -->
-            <div id="modal-input-container" class="hidden">
-                <input type="text" id="modal-input-field" class="w-full bg-dark-900 border border-dark-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-            </div>
-
-            <!-- Modal Action Buttons -->
-            <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-border/50">
-                <button id="modal-btn-cancel" onclick="closeCustomModal()" class="hidden px-3.5 py-1.5 bg-dark-700 hover:bg-dark-600 border border-dark-border text-xs font-semibold text-gray-300 rounded-lg transition">
-                    Anuluj
+    <!-- STUDY OPTIONS MODAL (ALL vs REVIEW) -->
+    <div id="study-options-modal" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in relative">
+            <button onclick="closeStudyOptions()" class="absolute top-4 right-5 text-duo-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-2xl font-extrabold text-white mb-2 mt-2">Wybierz tryb nauki</h3>
+            <p class="text-duo-muted font-bold text-sm mb-6 leading-relaxed">Ta talia zawiera fiszki, które ostatnio sprawiły Ci problem. Jak chcesz się uczyć?</p>
+            
+            <div class="space-y-3">
+                <button onclick="startStudyMode('all')" class="btn-3d btn-primary w-full py-4 flex flex-col">
+                    <span class="text-sm">WSZYSTKIE FISZKI</span>
+                    <span class="text-[10px] font-bold text-white/70" id="opt-all-count">0</span>
                 </button>
-                <button id="modal-btn-confirm" onclick="closeCustomModal()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white rounded-lg transition shadow-lg shadow-blue-500/10">
-                    OK
+                <button onclick="startStudyMode('review')" class="btn-3d btn-warning w-full py-4 flex flex-col">
+                    <span class="text-sm">TRENUJ SŁABE PUNKTY</span>
+                    <span class="text-[10px] font-bold text-duo-bg/70" id="opt-review-count">0 (Średnie/Trudne)</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- APP LOGIC -->
+    <!-- LESSON COMPLETE -->
+    <div id="lesson-complete-overlay" class="hidden fixed inset-0 bg-duo-bg z-50 flex flex-col justify-between items-center text-center pb-8 pt-20 px-6">
+        <div class="space-y-6 flex flex-col items-center animate-bounce-in w-full">
+            <div class="w-32 h-32 bg-duo-surface rounded-full border-4 border-duo-border flex items-center justify-center mb-2 shadow-xl">
+                <i id="complete-streak-icon" class="fa-solid fa-fire text-6xl text-duo-yellow"></i>
+            </div>
+            <h2 class="text-4xl font-extrabold text-duo-blue">Świetna robota!</h2>
+            <div class="grid grid-cols-2 gap-4 mt-8 w-full max-w-sm">
+                <div class="bg-duo-surface border-2 border-duo-blue rounded-xl p-4 flex flex-col items-center">
+                    <span class="block text-duo-blue font-extrabold text-xl mb-1 uppercase tracking-wide">XP</span>
+                    <span class="text-white font-extrabold text-2xl" id="complete-xp">+0</span>
+                </div>
+                <div class="bg-duo-surface border-2 border-duo-yellow rounded-xl p-4 flex flex-col items-center">
+                    <span class="block text-duo-yellow font-extrabold text-xl mb-1 uppercase tracking-wide">Passa</span>
+                    <span class="text-white font-extrabold text-2xl" id="complete-streak-text">0 Dni</span>
+                </div>
+            </div>
+        </div>
+        <div class="w-full max-w-sm mt-8">
+            <button onclick="closeLessonComplete()" class="btn-3d btn-primary w-full py-4 text-[16px]">KONTYNUUJ</button>
+        </div>
+    </div>
+
+    <!-- REUSABLE MODAL -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-bounce-in">
+            <h3 id="modal-title" class="text-xl font-extrabold text-white mb-2">Tytuł</h3>
+            <p id="modal-desc" class="text-duo-muted font-bold text-sm mb-5 leading-relaxed">Opis</p>
+            <div id="modal-input-wrapper" class="hidden mb-5">
+                <input type="text" id="modal-input" class="duo-input w-full" placeholder="...">
+            </div>
+            <div class="flex gap-3">
+                <button id="modal-btn-cancel" class="hidden flex-1 btn-3d btn-surface py-3 text-sm">ANULUJ</button>
+                <button id="modal-btn-ok" class="flex-1 btn-3d btn-primary py-3 text-sm">GOTOWE</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let decks = [];
-        let currentDeckId = null;
-        let currentCardIndex = 0;
-        let isCardFlipped = false;
-        let editingDeck = null;
-        let generatorMode = 'text';
-        let deleteTimeouts = {};
-        let userStats = { id: '', sessions: 0, reviewed: 0, easy: 0, medium: 0, hard: 0, lastStudyDate: '', streak: 0 };
+        let stats = { name: 'Uczeń', streak: 0, xp: 0, sessions: 0, lastDate: '' };
+        let studyState = { deckId: null, cards: [], currentIndex: 0, sessionXP: 0, sessionCorrect: 0 };
+        let isCardCheckable = false;
+        let selectedDeckForStudy = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            initUserProfile();
-            loadDecksFromStorage();
-            renderDecks();
-            populateDeckSelectors();
-            setupKeyboardShortcuts();
-            setupTouchGestures();
-            checkPwaBanner();
+            loadData(); updateHeaderUI(); renderDecks(); switchTab('home');
         });
 
-        function initUserProfile() {
-            const savedStats = localStorage.getItem('fiszki_user_profile_v1');
-            if (savedStats) {
-                try { userStats = JSON.parse(savedStats); } catch(e) { createNewUserProfile(); }
-            } else {
-                createNewUserProfile();
+        function loadData() {
+            try {
+                decks = JSON.parse(localStorage.getItem('duo_fiszki_decks_v4')) || [];
+                let savedStats = JSON.parse(localStorage.getItem('duo_fiszki_stats_v4'));
+                if(savedStats) stats = { ...stats, ...savedStats };
+            } catch(e) {}
+            if (decks.length === 0) {
+                decks.push({ id: 'd_' + Date.now(), title: 'Angielski - Na Start', cards: [
+                    { id: 'c1', front: 'To procrastinate', back: 'Odwlekać', status: 0 },
+                    { id: 'c2', front: 'Resilience', back: 'Odporność / Wytrzymałość', status: 0 }
+                ]}); saveData();
             }
-            renderStats();
+            checkStreak();
         }
 
-        function createNewUserProfile() {
-            const randomId = 'USR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-            userStats = { id: randomId, sessions: 0, reviewed: 0, easy: 0, medium: 0, hard: 0, lastStudyDate: '', streak: 0 };
-            saveUserProfile();
+        function saveData() {
+            localStorage.setItem('duo_fiszki_decks_v4', JSON.stringify(decks));
+            localStorage.setItem('duo_fiszki_stats_v4', JSON.stringify(stats));
         }
 
-        function saveUserProfile() {
-            localStorage.setItem('fiszki_user_profile_v1', JSON.stringify(userStats));
-            renderStats();
+        function checkStreak() {
+            const today = new Date().toISOString().split('T')[0];
+            if (stats.lastDate && stats.lastDate !== today) {
+                const diffTime = Math.abs(new Date(today) - new Date(stats.lastDate));
+                if (Math.ceil(diffTime / (1000 * 60 * 60 * 24)) > 1) stats.streak = 0;
+            }
+            saveData();
         }
 
-        function renderStats() {
-            document.getElementById('user-profile-id').innerText = `ID: ${userStats.id}`;
-            document.getElementById('stat-sessions').innerText = userStats.sessions;
-            document.getElementById('stat-reviewed').innerText = userStats.reviewed;
-            
-            const totalRated = userStats.easy + userStats.medium + userStats.hard;
-            const accuracy = totalRated > 0 ? Math.round((userStats.easy / totalRated) * 100) : 0;
-            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
-            document.getElementById('stat-streak').innerText = `${userStats.streak} 🔥`;
-
-            document.getElementById('stat-easy-count').innerText = userStats.easy;
-            document.getElementById('stat-medium-count').innerText = userStats.medium;
-            document.getElementById('stat-hard-count').innerText = userStats.hard;
-
-            document.getElementById('stat-easy-bar').style.width = totalRated > 0 ? `${(userStats.easy / totalRated) * 100}%` : '0%';
-            document.getElementById('stat-medium-bar').style.width = totalRated > 0 ? `${(userStats.medium / totalRated) * 100}%` : '0%';
-            document.getElementById('stat-hard-bar').style.width = totalRated > 0 ? `${(userStats.hard / totalRated) * 100}%` : '0%';
+        function updateHeaderUI() {
+            document.getElementById('header-streak').innerText = stats.streak;
+            document.getElementById('header-xp').innerText = stats.xp;
         }
 
-        function resetProfileStats() {
-            showCustomModal({
-                title: 'Zresetować statystyki?',
-                subtitle: 'Twoje postępy na tym urządzeniu zostaną wyzerowane. Unikalne ID profilu pozostanie bez zmian.',
-                icon: '🔄',
-                showCancel: true,
-                onConfirm: () => {
-                    userStats.sessions = 0;
-                    userStats.reviewed = 0;
-                    userStats.easy = 0;
-                    userStats.medium = 0;
-                    userStats.hard = 0;
-                    userStats.streak = 0;
-                    userStats.lastStudyDate = '';
-                    saveUserProfile();
-                }
+        function switchTab(tabId) {
+            ['home', 'add', 'profile'].forEach(id => {
+                document.getElementById(`view-${id}`).classList.add('hidden');
+                document.getElementById(`nav-btn-${id}`)?.classList.replace('text-duo-blue', 'text-duo-muted');
             });
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-btn-${tabId}`)?.classList.replace('text-duo-muted', 'text-duo-blue');
+            if(tabId === 'home') renderDecks();
+            if(tabId === 'add') populateAddSelect();
+            if(tabId === 'profile') renderProfile();
         }
 
-        function loadDecksFromStorage() {
-            const saved = localStorage.getItem('fiszki_app_decks_v6');
-            if (saved) {
-                try { decks = JSON.parse(saved); } catch(e) { decks = []; }
-            } else {
-                decks = [{
-                    id: 'deck_demo_1',
-                    title: 'Słówka Angielskie — Technologia',
-                    cards: [
-                        { id: 'c1', front: 'Artificial Intelligence', back: 'Sztuczna Inteligencja', example: 'AI is transforming tech.', status: 0 },
-                        { id: 'c2', front: 'Cloud Computing', back: 'Przetwarzanie w Chmurze', example: 'Data stored in the cloud.', status: 0 }
-                    ]
-                }];
-                saveDecksToStorage();
-            }
-        }
-
-        function saveDecksToStorage() {
-            localStorage.setItem('fiszki_app_decks_v6', JSON.stringify(decks));
-            updateDeckBadge();
-            populateDeckSelectors();
-        }
-
-        function updateDeckBadge() {
-            const badge = document.getElementById('deck-count-badge');
-            if (badge) badge.innerText = decks.length;
-        }
-
-        function populateDeckSelectors() {
-            const selects = [
-                document.getElementById('quick-add-target-deck'),
-                document.getElementById('import-target-deck')
-            ];
-
-            selects.forEach(select => {
-                if (!select) return;
-                const currentVal = select.value;
-                const isImport = select.id === 'import-target-deck';
-                
-                let html = isImport ? '<option value="NEW">+ Utwórz Nową Talię</option>' : '';
-                decks.forEach(d => {
-                    html += `<option value="${d.id}">${escapeHtml(d.title)} (${d.cards.length})</option>`;
-                });
-                select.innerHTML = html;
-                if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
-                    select.value = currentVal;
-                }
-            });
-        }
-
-        function switchTab(tabName) {
-            ['decks', 'stats', 'generator', 'import', 'study', 'edit'].forEach(t => {
-                const el = document.getElementById(`tab-${t}`);
-                if (el) el.classList.add('hidden');
-                
-                const navEl = document.getElementById(`nav-${t}`);
-                if (navEl) {
-                    navEl.classList.remove('bg-dark-700', 'text-white', 'border', 'border-dark-border');
-                    navEl.classList.add('text-gray-400');
-                }
-
-                const mobNav = document.getElementById(`mob-nav-${t}`);
-                if (mobNav) {
-                    mobNav.classList.remove('text-blue-400');
-                    mobNav.classList.add('text-gray-400');
-                }
-            });
-
-            const target = document.getElementById(`tab-${tabName}`);
-            if (target) target.classList.remove('hidden');
-
-            const targetNav = document.getElementById(`nav-${tabName}`);
-            if (targetNav) {
-                targetNav.classList.add('bg-dark-700', 'text-white', 'border', 'border-dark-border');
-                targetNav.classList.remove('text-gray-400');
-            }
-
-            const mobTarget = document.getElementById(`mob-nav-${tabName}`);
-            if (mobTarget) {
-                mobTarget.classList.add('text-blue-400');
-                mobTarget.classList.remove('text-gray-400');
-            }
-
-            if (tabName === 'decks') renderDecks();
-            if (tabName === 'stats') renderStats();
-        }
-
+        // --- RENDER HOME & INTUITIVE DECK STATS ---
         function renderDecks() {
-            updateDeckBadge();
-            const container = document.getElementById('decks-grid');
-            const searchQuery = (document.getElementById('search-decks')?.value || '').toLowerCase();
-            if (!container) return;
-            container.innerHTML = '';
-
-            const filteredDecks = decks.filter(d => d.title.toLowerCase().includes(searchQuery));
-
-            if (filteredDecks.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full py-8 text-center border border-dashed border-dark-border rounded-xl bg-dark-800/40">
-                        <p class="text-xs text-gray-500">Brak talii w bibliotece.</p>
-                        <button onclick="promptCreateDeckModal()" class="mt-2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg">
-                            + Stwórz Talię
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            filteredDecks.forEach(deck => {
+            const container = document.getElementById('decks-container'); container.innerHTML = '';
+            decks.forEach(deck => {
                 const total = deck.cards.length;
                 const mastered = deck.cards.filter(c => c.status === 3).length;
-                const progressPct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                const toReview = deck.cards.filter(c => c.status === 1 || c.status === 2).length;
+                const unseen = deck.cards.filter(c => c.status === 0).length;
                 
-                const cardEl = document.createElement('div');
-                cardEl.className = 'bg-dark-800 border border-dark-border hover:border-dark-600 rounded-xl p-3.5 flex flex-col justify-between transition';
-                cardEl.innerHTML = `
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                        <h3 class="text-xs font-bold text-white truncate">${escapeHtml(deck.title)}</h3>
-                        <div class="flex items-center gap-1 shrink-0">
-                            <button id="del-btn-${deck.id}" onclick="inlineConfirmDelete('${deck.id}', event)" class="px-2 py-0.5 text-[10px] text-gray-500 hover:text-rose-400 rounded transition font-mono">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                            <button onclick="openDeckEditor('${deck.id}', event)" class="px-2 py-0.5 text-[10px] text-gray-500 hover:text-gray-200 rounded transition">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                        </div>
-                    </div>
+                const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                
+                // Clear actionable UI badges instead of cryptic icons
+                let statBadges = '';
+                if(toReview > 0) statBadges += `<span class="bg-duo-bg border border-duo-red text-duo-red px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-fire mr-1"></i> Do powtórki: ${toReview}</span>`;
+                if(unseen > 0) statBadges += `<span class="bg-duo-bg border border-duo-border text-duo-muted px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-inbox mr-1"></i> Nowe: ${unseen}</span>`;
 
-                    <div class="pt-2 border-t border-dark-border/40 space-y-2">
-                        <div class="flex items-center justify-between text-[10px] text-gray-400 font-mono">
-                            <span>Fiszki: <strong class="text-white">${total}</strong></span>
-                            <span>Opanowanie: <strong class="text-blue-400">${progressPct}%</strong></span>
+                container.innerHTML += `
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-3xl p-5 shadow-lg">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-extrabold text-white flex items-center">${escape(deck.title)}</h3>
+                            <button onclick="confirmDeleteDeck('${deck.id}')" class="text-duo-muted hover:text-duo-red p-1"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
-                        <div class="w-full bg-dark-700 h-1 rounded-full overflow-hidden">
-                            <div class="bg-blue-500 h-full transition-all duration-300" style="width: ${progressPct}%"></div>
+                        
+                        <div class="flex items-center gap-2 mb-4 mt-1 flex-wrap">
+                            ${statBadges || '<span class="bg-duo-bg border border-duo-green text-duo-green px-2 py-1 rounded-md text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i> Talia opanowana</span>'}
                         </div>
-                        <div class="grid grid-cols-2 gap-1.5 pt-1">
-                            <button onclick="startStudy('${deck.id}')" class="py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 text-[11px] font-semibold rounded-lg transition">
-                                <i class="fa-solid fa-play text-[9px] mr-1"></i> Ucz się
-                            </button>
-                            <button onclick="openAiAddForDeck('${deck.id}')" class="py-1.5 bg-dark-700 hover:bg-dark-600 border border-dark-border text-gray-300 text-[11px] font-semibold rounded-lg transition">
-                                + AI Fiszki
-                            </button>
+
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="progress-bar-bg flex-1"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
+                            <span class="text-xs font-bold text-duo-muted">${pct}% Opanowane</span>
                         </div>
-                    </div>
-                `;
-                container.appendChild(cardEl);
+                        <button onclick="promptStudyMode('${deck.id}')" class="btn-3d btn-primary w-full py-3.5 text-sm">ZACZNIJ LEKCJĘ</button>
+                    </div>`;
             });
         }
 
-        function updateLivePreview() {
-            const front = document.getElementById('quick-add-front').value.trim();
-            const back = document.getElementById('quick-add-back').value.trim();
-            const example = document.getElementById('quick-add-example').value.trim();
+        function promptNewDeck() {
+            showModal({ title: 'Nowa Talia', desc: 'Podaj nazwę dla nowego zbioru:', input: true, placeholder: 'np. Historia', cancel: true, onOk: (val) => {
+                if(val?.trim()) { decks.push({ id: 'd_'+Date.now(), title: val.trim(), cards: [] }); saveData(); renderDecks(); }
+            }});
+        }
+        function confirmDeleteDeck(id) {
+            showModal({ title: 'Usunąć talię?', desc: 'Fiszki z tej talii znikną na zawsze.', cancel: true, onOk: () => {
+                decks = decks.filter(d => d.id !== id); saveData(); renderDecks();
+            }});
+        }
 
-            const previewContainer = document.getElementById('live-card-preview');
-            const previewFront = document.getElementById('preview-front');
-            const previewBack = document.getElementById('preview-back');
-            const previewExampleContainer = document.getElementById('preview-example-container');
-            const previewExample = document.getElementById('preview-example');
+        // --- IMPORT & ADD ---
+        function populateAddSelect() {
+            const select = document.getElementById('quick-add-deck');
+            let html = `<option value="NEW_DECK">➕ Utwórz nową talię</option>`;
+            html += decks.map(d => `<option value="${d.id}">${escape(d.title)}</option>`).join('');
+            select.innerHTML = html;
+            if(decks.length > 0) select.value = decks[0].id;
+            else select.value = "NEW_DECK";
+            toggleNewDeckInput();
+        }
+        function toggleNewDeckInput() {
+            const select = document.getElementById('quick-add-deck');
+            const input = document.getElementById('new-deck-name');
+            if (select.value === 'NEW_DECK') input.classList.remove('hidden');
+            else input.classList.add('hidden');
+        }
+        
+        function resolveTargetDeck() {
+            let id = document.getElementById('quick-add-deck').value;
+            if(id === 'NEW_DECK') {
+                const title = document.getElementById('new-deck-name').value.trim();
+                if(!title) return null;
+                const newDeck = { id: 'd_'+Date.now(), title, cards: [] };
+                decks.unshift(newDeck);
+                id = newDeck.id;
+            }
+            return id;
+        }
 
-            if (front || back || example) {
-                previewContainer.classList.remove('hidden');
-                previewFront.innerText = front || '...';
-                previewBack.innerText = back || '...';
+        function addSingleCard() {
+            const id = resolveTargetDeck();
+            const front = document.getElementById('add-front').value.trim();
+            const back = document.getElementById('add-back').value.trim();
+            
+            if(!id) return showModal({title:'Błąd', desc:'Podaj nazwę nowej talii.'});
+            if(!front || !back) return showModal({title:'Błąd', desc:'Uzupełnij pojęcie i odpowiedź.'});
+            
+            decks.find(d => d.id === id).cards.push({ id: 'c_'+Date.now(), front, back, status: 0 });
+            saveData(); 
+            
+            populateAddSelect(); 
+            document.getElementById('quick-add-deck').value = id; 
+            toggleNewDeckInput();
+            
+            document.getElementById('add-front').value = ''; document.getElementById('add-back').value = '';
+            showModal({title:'Dodano!', desc: 'Fiszka zapisana pomyślnie.'});
+        }
 
-                if (example) {
-                    previewExampleContainer.classList.remove('hidden');
-                    previewExample.innerText = example;
-                } else {
-                    previewExampleContainer.classList.add('hidden');
+        function generateAndCopyPrompt(type) {
+            const lang = document.getElementById('ai-lang').value;
+            let prompt = "";
+
+            if (type === 'text') {
+                const topic = document.getElementById('ai-topic').value.trim() || 'Słówka';
+                const count = document.getElementById('ai-count').value;
+                prompt = `Wygeneruj ${count} fiszek na temat: "${topic}". Język odpowiedzi: ${lang}. Zwróć WYŁĄCZNIE linie w formacie: Pojęcie | Odpowiedź. Zero dodatkowego tekstu.`;
+            } else if (type === 'vision') {
+                prompt = `Zanalizuj tekst z załączonego zdjęcia / skanu (notatki, podręcznik itp.). Wyciągnij z niego najważniejsze pojęcia i wygeneruj fiszki edukacyjne. Język odpowiedzi: ${lang}. Zwróć WYŁĄCZNIE linie w formacie: Pojęcie | Odpowiedź. Żadnych wstępów, komentarzy i formatowania Markdown. Zwróć sam tekst fiszek.`;
+            }
+            
+            navigator.clipboard.writeText(prompt);
+            showModal({ title: 'Skopiowano!', desc: 'Wklej prompt do ChatGPT/Claude' + (type === 'vision' ? ' i nie zapomnij dodać zdjęcia!' : '.') });
+        }
+
+        function importCards() {
+            const id = resolveTargetDeck();
+            const text = document.getElementById('import-text').value.trim();
+            
+            if(!id) return showModal({title:'Błąd', desc:'Podaj nazwę nowej talii.'});
+            if(!text) return showModal({title:'Błąd', desc:'Brak tekstu do importu.'});
+            
+            let added = 0; const deck = decks.find(d => d.id === id);
+            text.split('\n').forEach(line => {
+                if(line.trim() === '') return;
+                const parts = line.split('|');
+                if(parts.length >= 2) { 
+                    deck.cards.push({ id: 'c_'+Date.now()+Math.random(), front: parts[0].trim().replace(/^[\d\.\-\*]+\s*/, ''), back: parts[1].trim(), status: 0 }); 
+                    added++; 
                 }
+            });
+            if(added > 0) { 
+                saveData(); 
+                populateAddSelect();
+                document.getElementById('quick-add-deck').value = id;
+                toggleNewDeckInput();
+                document.getElementById('import-text').value = ''; 
+                showModal({title:'Sukces', desc:`Dodano ${added} fiszek do talii.`}); 
             } else {
-                previewContainer.classList.add('hidden');
+                showModal({title:'Błąd', desc:'Nie odnaleziono poprawnego formatu "Przód | Tył" w tekście.'}); 
             }
         }
 
-        function handleQuickAddKeydown(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                quickAddCard();
-            }
-        }
-
-        function inlineConfirmDelete(deckId, event) {
-            if (event) event.stopPropagation();
-
-            const btn = document.getElementById(`del-btn-${deckId}`);
-            if (!btn) return;
-
-            if (btn.dataset.confirm === "true") {
-                clearTimeout(deleteTimeouts[deckId]);
-                decks = decks.filter(d => d.id !== deckId);
-                saveDecksToStorage();
-                renderDecks();
-            } else {
-                btn.dataset.confirm = "true";
-                btn.innerHTML = `<span class="text-rose-400 font-bold">Potwierdź?</span>`;
-                btn.classList.add('bg-rose-950/40', 'border', 'border-rose-800/50');
-
-                deleteTimeouts[deckId] = setTimeout(() => {
-                    btn.dataset.confirm = "false";
-                    btn.innerHTML = `<i class="fa-solid fa-trash-can"></i>`;
-                    btn.classList.remove('bg-rose-950/40', 'border', 'border-rose-800/50');
-                }, 3000);
-            }
-        }
-
-        function quickAddCard() {
-            const targetId = document.getElementById('quick-add-target-deck').value;
-            const front = document.getElementById('quick-add-front').value.trim();
-            const back = document.getElementById('quick-add-back').value.trim();
-            const example = document.getElementById('quick-add-example').value.trim();
-
-            if (!front || !back) {
-                showCustomModal({
-                    title: 'Uzupełnij dane fiszki',
-                    subtitle: 'Wpisz pojęcie (przód) oraz jego odpowiedź (tył), aby dodać kartę.',
-                    icon: '⚠️'
+        // --- PROFILE ---
+        function renderProfile() {
+            document.getElementById('profile-name-display').innerText = escape(stats.name || 'Uczeń');
+            
+            // Calculate Global Mastery
+            let totalCards = 0;
+            let masteredCards = 0;
+            const probs = [];
+            
+            decks.forEach(d => {
+                totalCards += d.cards.length;
+                d.cards.forEach(c => {
+                    if (c.status === 3) masteredCards++;
+                    if (c.status === 1 || c.status === 2) probs.push({deck: d.title, ...c});
                 });
-                return;
-            }
-
-            let targetDeck = decks.find(d => d.id === targetId);
-            if (!targetDeck) {
-                if (decks.length === 0) {
-                    targetDeck = { id: 'deck_' + Date.now(), title: 'Moja Talia', cards: [] };
-                    decks.push(targetDeck);
-                } else {
-                    targetDeck = decks[0];
-                }
-            }
-
-            targetDeck.cards.push({
-                id: 'c_' + Date.now(),
-                front: front,
-                back: back,
-                example: example,
-                status: 0
             });
+            
+            const totalMasteryPct = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+            
+            document.getElementById('stat-streak').innerText = stats.streak;
+            document.getElementById('stat-xp').innerText = stats.xp;
+            document.getElementById('stat-sessions').innerText = stats.sessions;
+            document.getElementById('stat-mastery').innerText = `${totalMasteryPct}%`;
 
-            saveDecksToStorage();
-            document.getElementById('quick-add-front').value = '';
-            document.getElementById('quick-add-back').value = '';
-            document.getElementById('quick-add-example').value = '';
-            updateLivePreview();
-            renderDecks();
-            document.getElementById('quick-add-front').focus();
-        }
-
-        function promptCreateDeckModal() {
-            showCustomModal({
-                title: 'Utwórz nową talię',
-                subtitle: 'Wpisz nazwę nowej talii fiszek:',
-                icon: '📁',
-                showInput: true,
-                inputPlaceholder: 'np. Historia - Wiosna Ludów',
-                showCancel: true,
-                onConfirm: (inputValue) => {
-                    if (!inputValue || !inputValue.trim()) return;
-                    const newDeck = {
-                        id: 'deck_' + Date.now(),
-                        title: inputValue.trim(),
-                        cards: []
-                    };
-                    decks.unshift(newDeck);
-                    saveDecksToStorage();
-                    renderDecks();
-                    openDeckEditor(newDeck.id);
-                }
-            });
-        }
-
-        function openAiAddForDeck(deckId) {
-            switchTab('import');
-            const select = document.getElementById('import-target-deck');
-            if (select) {
-                select.value = deckId;
-                toggleImportTitleInput();
-            }
-        }
-
-        function toggleImportTitleInput() {
-            const val = document.getElementById('import-target-deck').value;
-            const container = document.getElementById('import-title-container');
-            if (val === 'NEW') {
-                container.classList.remove('hidden');
+            const cont = document.getElementById('problematic-words-list');
+            if(probs.length === 0) {
+                cont.innerHTML = `
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-xl p-5 text-center shadow-sm">
+                        <i class="fa-solid fa-check-circle text-3xl text-duo-green mb-2"></i>
+                        <p class="text-white font-extrabold text-sm">Brak trudnych słówek!</p>
+                        <p class="text-duo-muted text-xs font-bold mt-1">Materiał zrewidowany. Dobra robota.</p>
+                    </div>`;
             } else {
-                container.classList.add('hidden');
+                cont.innerHTML = probs.map(c => `
+                    <div class="bg-duo-surface border-2 border-duo-border rounded-xl p-3 flex justify-between items-center shadow-sm">
+                        <div>
+                            <p class="font-extrabold text-white text-base leading-tight">${escape(c.front)}</p>
+                            <p class="text-duo-blue text-xs font-bold leading-tight mt-0.5">${escape(c.back)}</p>
+                        </div>
+                        <i class="fa-solid fa-fire text-duo-red"></i>
+                    </div>`).join('');
             }
         }
-
-        function setGeneratorMode(mode) {
-            generatorMode = mode;
-            const btnText = document.getElementById('mode-btn-text');
-            const btnVision = document.getElementById('mode-btn-vision');
-            const inputTex = document.getElementById('gen-input-text-container');
-            const inputVis = document.getElementById('gen-input-vision-container');
-
-            if (mode === 'text') {
-                btnText.className = "py-1.5 text-xs font-semibold rounded-lg bg-dark-700 text-white transition";
-                btnVision.className = "py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition";
-                inputTex.classList.remove('hidden');
-                inputVis.classList.add('hidden');
-            } else {
-                btnVision.className = "py-1.5 text-xs font-semibold rounded-lg bg-dark-700 text-white transition";
-                btnText.className = "py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white transition";
-                inputVis.classList.remove('hidden');
-                inputTex.classList.add('hidden');
-            }
+        function editProfileName() {
+            showModal({ title: 'Nazwa profilu', desc: 'Wpisz swoje imię:', input: true, cancel: true, onOk: (val) => {
+                if(val?.trim()) { stats.name = val.trim(); saveData(); renderProfile(); }
+            }});
+        }
+        function exportDecks() {
+            const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(decks));
+            const a = document.createElement('a'); a.href = data; a.download = 'fiszki_eksport.json';
+            a.click();
+        }
+        function resetStats() {
+            showModal({ title: 'Ostrzeżenie', desc: 'Wyzerować wszystkie zdobyte XP i Passę?', cancel: true, onOk: () => {
+                stats = { name: stats.name, streak: 0, xp: 0, sessions: 0, lastDate: '' }; saveData(); updateHeaderUI(); renderProfile();
+            }});
         }
 
-        function generateAIPrompt() {
-            const count = document.getElementById('prompt-count').value || 15;
-            const lang = document.getElementById('prompt-lang').value;
-            let strictPrompt = '';
-
-            if (generatorMode === 'text') {
-                const topic = document.getElementById('prompt-topic').value.trim() || 'Słówka i pojęcia';
-                strictPrompt = `Wygeneruj dokładnie ${count} fiszek do nauki na temat: "${topic}".
-Język odpowiedzi: ${lang}.
-
-ZASADY FORMATOWANIA (ANTI-SLOP):
-1. Format każdej linii ma wyglądać dokładnie tak:
-   Pojęcie / Pytanie | Odpowiedź / Wyjaśnienie
-2. BRAK wstępów, brak komentarzy, brak podsumowań.
-3. BRAK formatowania Markdown (żadnych pogrubień **, żadnych bloków kodu \`\`\`).
-4. Każda fiszka w nowej linii.
-
-PRZYKŁAD:
-Apple | Jabłko`;
-            } else {
-                strictPrompt = `Przeanalizuj dołączone zdjęcie/skan ze słówkami lub notatkami.
-Wyciągnij z niego dokładnie ${count} najważniejszych słówek/pojęć i przetłumacz/wyjaśnij je w języku: ${lang}.
-
-ZASADY FORMATOWANIA (ANTI-SLOP):
-1. Zwróć WYŁĄCZNIE linie w formacie:
-   Słówko ze zdjęcia | Tłumaczenie / Wyjaśnienie
-2. Bez żadnych wstępów ("Oto słówka ze zdjęcia:"), bez komentarzy.
-3. Bez bloków kodu Markdown. Każda fiszka w nowej linii.`;
-            }
-
-            document.getElementById('prompt-output').innerText = strictPrompt;
-            document.getElementById('prompt-output-container').classList.remove('hidden');
-        }
-
-        function copyGeneratedPrompt() {
-            const text = document.getElementById('prompt-output').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.getElementById('copy-btn');
-                btn.innerHTML = `<i class="fa-solid fa-check text-green-400"></i> Skopiowano!`;
-                setTimeout(() => { btn.innerHTML = `<i class="fa-regular fa-copy"></i> Kopiuj`; }, 2000);
-            });
-        }
-
-        function parseAndCreateDeck() {
-            const rawText = document.getElementById('import-raw-text').value.trim();
-            const targetDeckVal = document.getElementById('import-target-deck').value;
-
-            if (!rawText) {
-                showCustomModal({ title: 'Brak tekstu', subtitle: 'Wklej wygenerowaną treść od AI.', icon: '⚠️' });
-                return;
-            }
-
-            const lines = rawText.split('\n');
-            const parsedCards = [];
-
-            lines.forEach((line, idx) => {
-                const cleanedLine = line.replace(/^[\d\.\-\*\s]+/, '').trim();
-                if (!cleanedLine) return;
-
-                const parts = cleanedLine.split('|');
-                if (parts.length >= 2) {
-                    const front = parts[0].trim();
-                    const back = parts[1].trim();
-                    if (front && back) {
-                        parsedCards.push({
-                            id: 'c_' + idx + '_' + Date.now(),
-                            front: front,
-                            back: back,
-                            status: 0
-                        });
-                    }
-                }
-            });
-
-            if (parsedCards.length === 0) {
-                showCustomModal({
-                    title: 'Nieprawidłowy format',
-                    subtitle: 'Nie udało się sparować fiszek. Upewnij się, że tekst zawiera znak "|" między pojęciem a odpowiedzią.',
-                    icon: '❌'
-                });
-                return;
-            }
-
-            let targetDeck = null;
-            if (targetDeckVal === 'NEW') {
-                let title = document.getElementById('import-deck-title').value.trim();
-                if (!title) title = 'Talia Fiszki #' + (decks.length + 1);
-                targetDeck = { id: 'deck_' + Date.now(), title: title, cards: [] };
-                decks.unshift(targetDeck);
-            } else {
-                targetDeck = decks.find(d => d.id === targetDeckVal);
-            }
-
-            if (targetDeck) {
-                targetDeck.cards.push(...parsedCards);
-                saveDecksToStorage();
-                document.getElementById('import-raw-text').value = '';
-                startStudy(targetDeck.id);
-            }
-        }
-
-        function startStudy(deckId) {
+        // --- STUDY MODES ---
+        function promptStudyMode(deckId) {
             const deck = decks.find(d => d.id === deckId);
-            if (!deck || deck.cards.length === 0) {
-                showCustomModal({ title: 'Talia jest pusta', subtitle: 'Dodaj najpierw fiszki do tej talii.', icon: '📭' });
-                return;
+            if(!deck || deck.cards.length === 0) return showModal({title: 'Pusto', desc: 'Dodaj fiszki do talii, aby rozpocząć.'});
+            
+            const reviewCount = deck.cards.filter(c => c.status === 1 || c.status === 2).length;
+            selectedDeckForStudy = deckId;
+            
+            if(reviewCount > 0) {
+                document.getElementById('opt-all-count').innerText = `${deck.cards.length} fiszek`;
+                document.getElementById('opt-review-count').innerText = `${reviewCount} do poprawy`;
+                document.getElementById('study-options-modal').classList.remove('hidden');
+            } else {
+                startStudyMode('all'); 
             }
-
-            currentDeckId = deckId;
-            currentCardIndex = 0;
-            isCardFlipped = false;
-
-            document.getElementById('study-deck-title').innerText = deck.title;
-            switchTab('study');
-            renderCurrentCard();
         }
 
-        function renderCurrentCard() {
-            const deck = decks.find(d => d.id === currentDeckId);
-            if (!deck) return;
-
-            const card = deck.cards[currentCardIndex];
-            const total = deck.cards.length;
-
-            document.getElementById('study-progress-text').innerText = `${currentCardIndex + 1} / ${total}`;
-            document.getElementById('study-progress-bar').style.width = `${((currentCardIndex + 1) / total) * 100}%`;
-
-            document.getElementById('card-front-text').innerText = card.front;
-            document.getElementById('card-back-text').innerText = card.back;
-
-            const exampleEl = document.getElementById('card-example-text');
-            if (card.example) {
-                exampleEl.innerText = `"${card.example}"`;
-                exampleEl.classList.remove('hidden');
-            } else {
-                exampleEl.classList.add('hidden');
-            }
-
-            isCardFlipped = false;
-            const cardElem = document.getElementById('card-element');
-            cardElem.classList.remove('rotate-y-180', 'card-swipe-left', 'card-swipe-right');
+        function closeStudyOptions() {
+            document.getElementById('study-options-modal').classList.add('hidden');
         }
 
-        function flipCard() {
-            isCardFlipped = !isCardFlipped;
-            const cardElem = document.getElementById('card-element');
-            if (isCardFlipped) {
-                cardElem.classList.add('rotate-y-180');
-            } else {
-                cardElem.classList.remove('rotate-y-180');
+        function startStudyMode(mode) {
+            closeStudyOptions();
+            const deck = decks.find(d => d.id === selectedDeckForStudy);
+            let cardsToPlay = [...deck.cards];
+            
+            if (mode === 'review') {
+                cardsToPlay = cardsToPlay.filter(c => c.status === 1 || c.status === 2);
             }
+            
+            studyState = { deckId: deck.id, cards: cardsToPlay.sort(()=>Math.random()-0.5), currentIndex: 0, sessionXP: 0, sessionCorrect: 0 };
+            document.getElementById('global-header').classList.add('hidden'); document.getElementById('bottom-nav').classList.add('hidden');
+            document.getElementById('study-overlay').classList.remove('hidden');
+            renderStudyCard();
+        }
+
+        function quitStudy() {
+            showModal({ title: 'Wyjście', desc: 'Przerwać lekcję? Nie zapiszemy tej sesji.', cancel: true, onOk: () => {
+                document.getElementById('study-overlay').classList.add('hidden'); document.getElementById('global-header').classList.remove('hidden');
+                document.getElementById('bottom-nav').classList.remove('hidden'); switchTab('home');
+            }});
+        }
+
+        function renderStudyCard() {
+            isCardCheckable = true;
+            document.getElementById('study-card').classList.remove('flipped');
+            const card = studyState.cards[studyState.currentIndex];
+            document.getElementById('study-progress').style.width = `${(studyState.currentIndex/studyState.cards.length)*100}%`;
+            document.getElementById('study-front').innerText = card.front;
+            document.getElementById('study-back').innerText = card.back;
+            document.getElementById('study-action-bar').classList.remove('hidden');
+            document.getElementById('study-rating-drawer').classList.add('hidden');
+            document.getElementById('study-rating-drawer').classList.remove('animate-slide-up');
+        }
+
+        function revealAnswer() {
+            if(!isCardCheckable) return;
+            isCardCheckable = false;
+            document.getElementById('study-card').classList.add('flipped');
+            document.getElementById('study-action-bar').classList.add('hidden');
+            const drawer = document.getElementById('study-rating-drawer');
+            drawer.classList.remove('hidden'); void drawer.offsetWidth; drawer.classList.add('animate-slide-up');
         }
 
         function rateCard(rating) {
-            const deck = decks.find(d => d.id === currentDeckId);
-            if (!deck) return;
+            studyState.sessionXP += (rating===3?15:rating===2?10:5); if(rating>1) studyState.sessionCorrect++;
+            const orig = decks.find(d=>d.id===studyState.deckId).cards.find(c=>c.id===studyState.cards[studyState.currentIndex].id);
+            if(orig) orig.status = rating;
+            
+            studyState.currentIndex++;
+            if(studyState.currentIndex >= studyState.cards.length) finishSession(); else renderStudyCard();
+        }
 
-            deck.cards[currentCardIndex].status = rating;
-            saveDecksToStorage();
-
-            // Track User Stats
-            userStats.reviewed++;
-            if (rating === 3) userStats.easy++;
-            else if (rating === 2) userStats.medium++;
-            else if (rating === 1) userStats.hard++;
-
+        function finishSession() {
+            stats.xp += studyState.sessionXP; stats.sessions++;
             const today = new Date().toISOString().split('T')[0];
-            if (userStats.lastStudyDate !== today) {
-                userStats.streak++;
-                userStats.lastStudyDate = today;
-            }
-            saveUserProfile();
-
-            const cardElem = document.getElementById('card-element');
-            if (rating === 1) {
-                cardElem.classList.add('card-swipe-left');
-            } else {
-                cardElem.classList.add('card-swipe-right');
-            }
-
-            setTimeout(() => {
-                if (currentCardIndex < deck.cards.length - 1) {
-                    currentCardIndex++;
-                    renderCurrentCard();
-                } else {
-                    userStats.sessions++;
-                    saveUserProfile();
-                    showCustomModal({
-                        title: 'Sesja ukończona!',
-                        subtitle: `Świetna robota! Przejrzano ${deck.cards.length} fiszek.`,
-                        icon: '🎉',
-                        onConfirm: () => { switchTab('decks'); }
-                    });
-                }
-            }, 200);
+            let streakAnim = false; if(stats.lastDate !== today) { stats.streak++; stats.lastDate = today; streakAnim = true; }
+            saveData(); updateHeaderUI();
+            
+            document.getElementById('study-progress').style.width = '100%'; document.getElementById('study-overlay').classList.add('hidden');
+            document.getElementById('lesson-complete-overlay').classList.remove('hidden');
+            document.getElementById('complete-xp').innerText = `+${studyState.sessionXP}`; document.getElementById('complete-streak-text').innerText = `${stats.streak} Dni`;
+            
+            const icon = document.getElementById('complete-streak-icon'); icon.classList.remove('animate-streak-pop');
+            if(streakAnim) { void icon.offsetWidth; icon.classList.add('animate-streak-pop'); }
         }
 
-        function openDeckEditor(deckId, event) {
-            if (event) event.stopPropagation();
-
-            editingDeck = JSON.parse(JSON.stringify(decks.find(d => d.id === deckId)));
-            if (!editingDeck) return;
-
-            document.getElementById('edit-deck-title').value = editingDeck.title;
-            renderEditCards();
-            switchTab('edit');
+        function closeLessonComplete() {
+            document.getElementById('lesson-complete-overlay').classList.add('hidden'); document.getElementById('global-header').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden'); renderDecks();
         }
 
-        function renderEditCards() {
-            const container = document.getElementById('edit-cards-container');
-            container.innerHTML = '';
-
-            editingDeck.cards.forEach((card, idx) => {
-                const row = document.createElement('div');
-                row.className = 'bg-dark-800 border border-dark-border p-2 rounded-lg flex items-center gap-2';
-                row.innerHTML = `
-                    <span class="text-[10px] font-mono text-gray-500 w-4">${idx + 1}.</span>
-                    <input type="text" value="${escapeHtml(card.front)}" onchange="updateCardEdit(${idx}, 'front', this.value)" placeholder="Przód" class="flex-1 bg-dark-900 border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none">
-                    <input type="text" value="${escapeHtml(card.back)}" onchange="updateCardEdit(${idx}, 'back', this.value)" placeholder="Tył" class="flex-1 bg-dark-900 border border-dark-border rounded px-2 py-1 text-xs text-white focus:outline-none">
-                    <button onclick="removeCardFromEdit(${idx})" class="text-gray-500 hover:text-rose-400 p-1">
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                `;
-                container.appendChild(row);
-            });
+        // --- SHARED MODAL LOGIC ---
+        let modalOkCallback = null;
+        function showModal(opts) {
+            document.getElementById('modal-title').innerText = opts.title; document.getElementById('modal-desc').innerText = opts.desc;
+            const inputWrap = document.getElementById('modal-input-wrapper'), input = document.getElementById('modal-input'), cancelBtn = document.getElementById('modal-btn-cancel');
+            if(opts.input) { inputWrap.classList.remove('hidden'); input.value = ''; input.placeholder = opts.placeholder || ''; } else inputWrap.classList.add('hidden');
+            if(opts.cancel) { cancelBtn.classList.remove('hidden'); cancelBtn.onclick = hideModal; } else cancelBtn.classList.add('hidden');
+            modalOkCallback = opts.onOk;
+            document.getElementById('modal-btn-ok').onclick = () => { if(modalOkCallback) modalOkCallback(opts.input?input.value:null); hideModal(); };
+            document.getElementById('custom-modal').classList.remove('hidden'); if(opts.input) setTimeout(()=>input.focus(), 100);
         }
-
-        function updateCardEdit(index, field, value) {
-            if (editingDeck && editingDeck.cards[index]) {
-                editingDeck.cards[index][field] = value;
-            }
-        }
-
-        function removeCardFromEdit(index) {
-            if (editingDeck) {
-                editingDeck.cards.splice(index, 1);
-                renderEditCards();
-            }
-        }
-
-        function addNewCardToEdit() {
-            if (editingDeck) {
-                editingDeck.cards.push({ id: 'c_' + Date.now(), front: '', back: '', status: 0 });
-                renderEditCards();
-            }
-        }
-
-        function saveDeckEdits() {
-            if (!editingDeck) return;
-
-            editingDeck.title = document.getElementById('edit-deck-title').value.trim() || editingDeck.title;
-
-            const idx = decks.findIndex(d => d.id === editingDeck.id);
-            if (idx !== -1) {
-                decks[idx] = editingDeck;
-                saveDecksToStorage();
-                switchTab('decks');
-            }
-        }
-
-        function setupKeyboardShortcuts() {
-            document.addEventListener('keydown', (e) => {
-                const isStudyActive = !document.getElementById('tab-study').classList.contains('hidden');
-                if (!isStudyActive) return;
-
-                if (e.code === 'Space') {
-                    e.preventDefault();
-                    flipCard();
-                } else if (e.key === '1') {
-                    rateCard(1);
-                } else if (e.key === '2') {
-                    rateCard(2);
-                } else if (e.key === '3') {
-                    rateCard(3);
-                }
-            });
-        }
-
-        function setupTouchGestures() {
-            let touchStartX = 0;
-            let touchEndX = 0;
-
-            const cardElem = document.getElementById('card-element');
-            if (!cardElem) return;
-
-            cardElem.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, false);
-
-            cardElem.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                const diff = touchEndX - touchStartX;
-                if (Math.abs(diff) > 50) {
-                    if (diff < 0) rateCard(1);
-                    else rateCard(3);
-                }
-            }, false);
-        }
-
-        // CUSTOM MODAL ENGINE
-        let modalConfirmCallback = null;
-
-        function showCustomModal(options) {
-            const backdrop = document.getElementById('custom-modal-backdrop');
-            const titleEl = document.getElementById('modal-title');
-            const subtitleEl = document.getElementById('modal-subtitle');
-            const iconEl = document.getElementById('modal-icon-container');
-            const inputContainer = document.getElementById('modal-input-container');
-            const inputField = document.getElementById('modal-input-field');
-            const cancelBtn = document.getElementById('modal-btn-cancel');
-
-            titleEl.innerText = options.title || 'Informacja';
-            subtitleEl.innerText = options.subtitle || '';
-            iconEl.innerText = options.icon || '🐟';
-
-            if (options.showInput) {
-                inputContainer.classList.remove('hidden');
-                inputField.value = '';
-                inputField.placeholder = options.inputPlaceholder || '';
-                setTimeout(() => inputField.focus(), 100);
-            } else {
-                inputContainer.classList.add('hidden');
-            }
-
-            if (options.showCancel) {
-                cancelBtn.classList.remove('hidden');
-            } else {
-                cancelBtn.classList.add('hidden');
-            }
-
-            modalConfirmCallback = options.onConfirm || null;
-            backdrop.classList.remove('hidden');
-        }
-
-        function closeCustomModal() {
-            const backdrop = document.getElementById('custom-modal-backdrop');
-            const inputField = document.getElementById('modal-input-field');
-            const inputValue = inputField.value;
-
-            backdrop.classList.add('hidden');
-
-            if (modalConfirmCallback) {
-                modalConfirmCallback(inputValue);
-                modalConfirmCallback = null;
-            }
-        }
-
-        // PWA BANNER CHECK
-        function checkPwaBanner() {
-            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-            const isDismissed = localStorage.getItem('pwa_banner_dismissed');
-
-            if (!isStandalone && !isDismissed && isMobileDevice()) {
-                const banner = document.getElementById('pwa-install-banner');
-                const instructions = document.getElementById('pwa-instructions');
-                const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-                if (isiOS) {
-                    instructions.innerHTML = `Kliknij ikonę udostępniania <i class="fa-solid fa-share-from-square text-blue-400"></i> na dole ekranu, a następnie wybierz <strong>"Do ekranu początkowego"</strong>.`;
-                } else {
-                    instructions.innerHTML = `Kliknij menu przeglądarki <i class="fa-solid fa-ellipsis-vertical text-blue-400"></i>, a następnie wybierz <strong>"Dodaj do ekranu głównego"</strong> lub <strong>"Zainstaluj aplikację"</strong>.`;
-                }
-
-                banner.classList.remove('hidden');
-            }
-        }
-
-        function dismissPwaBanner() {
-            document.getElementById('pwa-install-banner').classList.add('hidden');
-            localStorage.setItem('pwa_banner_dismissed', 'true');
-        }
-
-        function isMobileDevice() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        function escapeHtml(str) {
-            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
+        function hideModal() { document.getElementById('custom-modal').classList.add('hidden'); }
+        function escape(str) { return String(str||'').replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
     </script>
 </body>
 </html>
